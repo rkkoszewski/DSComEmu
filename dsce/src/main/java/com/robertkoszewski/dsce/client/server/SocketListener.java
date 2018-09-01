@@ -260,7 +260,17 @@ public class SocketListener {
 	 * @throws IOException
 	 */
 	public void sendStaticMessage(InetAddress dest_ip, byte[] message) throws IOException {
-		
+		sendStaticMessage(dest_ip, message, port);
+	}
+	
+	/**
+	 * Send Static Message
+	 * @param dest_ip
+	 * @param message
+	 * @throws IOException
+	 */
+	public void sendStaticMessage(InetAddress dest_ip, DSMessage message) throws IOException {
+		sendStaticMessage(dest_ip, message.getMessage());
 	}
 	
 	/**

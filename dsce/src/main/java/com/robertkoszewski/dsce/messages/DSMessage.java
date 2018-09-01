@@ -325,10 +325,10 @@ public class DSMessage {
 	// Mode
 	public static final byte COMMAND_UPPER_MODE = 0x03;
 	public static final byte COMMAND_LOWER_MODE = 0x01;
-	public static final byte MODE_SLEEP_PAYLOAD = 0x0;
-	public static final byte MODE_VIDEO_PAYLOAD = 0x1;
-	public static final byte MODE_MUSIC_PAYLOAD = 0x2;
-	public static final byte MODE_AMBIENT_PAYLOAD = 0x2;
+	public static final byte MODE_SLEEP_PAYLOAD = 0x00;
+	public static final byte MODE_VIDEO_PAYLOAD = 0x01;
+	public static final byte MODE_MUSIC_PAYLOAD = 0x02;
+	public static final byte MODE_AMBIENT_PAYLOAD = 0x03;
 	
 	// Brightness
 	public static final byte COMMAND_UPPER_BRIGHTNESS = 0x03;
@@ -337,32 +337,36 @@ public class DSMessage {
 	// Ambient Color
 	public static final byte COMMAND_UPPER_AMBIENT_COLOR = 0x03;
 	public static final byte COMMAND_LOWER_AMBIENT_COLOR = 0x05;
-	
+
 	// Ambient Mode Type
 	public static final byte COMMAND_UPPER_AMBIENT_MODE_TYPE = 0x03;
 	public static final byte COMMAND_LOWER_AMBIENT_MODE_TYPE = 0x08;
-	public static final byte[] AMBIENT_MODE_TYPE_RGB_COLOR_PAYLOAD = new byte[] {0x00};
-	public static final byte[] AMBIENT_MODE_TYPE_SCENE_PAYLOAD = new byte[] {0x01};
+	public static final byte AMBIENT_MODE_TYPE_RGB_COLOR_PAYLOAD = 0x00;
+	public static final byte AMBIENT_MODE_TYPE_SCENE_PAYLOAD = 0x01;
 	
 	// Ambient Scene
 	public static final byte COMMAND_UPPER_AMBIENT_SCENE = 0x03;
 	public static final byte COMMAND_LOWER_AMBIENT_SCENE = 0x0D;
-	public static final byte[] AMBIENT_SCENE_RANDOM_COLOR = new byte[] {0x00};
-	public static final byte[] AMBIENT_SCENE_FIRESIDE_PAYLOAD = new byte[] {0x01};
-	public static final byte[] AMBIENT_SCENE_TWINKLE_PAYLOAD = new byte[] {0x02};
-	public static final byte[] AMBIENT_SCENE_OCEAN_PAYLOAD = new byte[] {0x03};
-	public static final byte[] AMBIENT_SCENE_RAINBOW_PAYLOAD = new byte[] {0x04};
-	public static final byte[] AMBIENT_SCENE_JULY4TH_PAYLOAD = new byte[] {0x05};
-	public static final byte[] AMBIENT_SCENE_HOLIDAY_PAYLOAD = new byte[] {0x06};
-	public static final byte[] AMBIENT_SCENE_POP_PAYLOAD = new byte[] {0x07};
-	public static final byte[] AMBIENT_SCENE_ENCHANTED_FOREST_PAYLOAD = new byte[] {0x08};
+	public static final byte AMBIENT_SCENE_RANDOM_COLOR = 0x00;
+	public static final byte AMBIENT_SCENE_FIRESIDE_PAYLOAD = 0x01;
+	public static final byte AMBIENT_SCENE_TWINKLE_PAYLOAD = 0x02;
+	public static final byte AMBIENT_SCENE_OCEAN_PAYLOAD = 0x03;
+	public static final byte AMBIENT_SCENE_RAINBOW_PAYLOAD = 0x04;
+	public static final byte AMBIENT_SCENE_JULY4TH_PAYLOAD = 0x05;
+	public static final byte AMBIENT_SCENE_HOLIDAY_PAYLOAD = 0x06;
+	public static final byte AMBIENT_SCENE_POP_PAYLOAD = 0x07;
+	public static final byte AMBIENT_SCENE_ENCHANTED_FOREST_PAYLOAD = 0x08;
 	
 	// HDMI Input
 	public static final byte COMMAND_UPPER_HDMI_INPUT = 0x03;
 	public static final byte COMMAND_LOWER_HDMI_INPUT = 0x20;
-	public static final byte[] HDMI_INPUT_CHANNEL_1_PAYLOAD = new byte[] {0x00};
-	public static final byte[] HDMI_INPUT_CHANNEL_2_PAYLOAD = new byte[] {0x01};
-	public static final byte[] HDMI_INPUT_CHANNEL_3_PAYLOAD = new byte[] {0x02};
+	public static final byte HDMI_INPUT_CHANNEL_1_PAYLOAD = 0x00;
+	public static final byte HDMI_INPUT_CHANNEL_2_PAYLOAD = 0x01;
+	public static final byte HDMI_INPUT_CHANNEL_3_PAYLOAD = 0x02;
+	
+	// Change Device Name
+	public static final byte COMMAND_UPPER_DEVICE_NAME = 0x01;
+	public static final byte COMMAND_LOWER_DEVICE_NAME = 0x07;
 	
 	// Enums
 	

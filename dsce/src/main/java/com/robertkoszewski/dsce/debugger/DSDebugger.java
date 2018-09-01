@@ -45,7 +45,7 @@ public class DSDebugger {
 			System.out.println("DEBUG: " + senderIP.getHostAddress() +":"+senderPort + " -> " +
 					"GrAddr: 0x" + StringUtils.bytesToHex(message.getGroupAddress()) +
 					" | CUpper: 0x" + StringUtils.bytesToHex(message.getCommandUpper()) + 
-					" | CLower: 0x" + StringUtils.bytesToHex(message.getCommandUpper()) + 
+					" | CLower: 0x" + StringUtils.bytesToHex(message.getCommandLower()) + 
 					" | Flags: 0x" + StringUtils.bytesToHex(message.getFlags()) +
 					(payload.length != 0 ? 
 							" | Payload: 0x" + StringUtils.bytesToHex(message.getPayload()) +

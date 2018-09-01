@@ -27,9 +27,13 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.messages.AmbientColorMessageWrapper;
+import com.robertkoszewski.dsce.messages.AmbientModeMessageWrapper;
+import com.robertkoszewski.dsce.messages.AmbientSceneMessageWrapper;
 import com.robertkoszewski.dsce.messages.BrightnessMessageWrapper;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
+import com.robertkoszewski.dsce.messages.DeviceNameMessageWrapper;
 import com.robertkoszewski.dsce.messages.InvalidMessageException;
 import com.robertkoszewski.dsce.messages.ModeMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
@@ -41,7 +45,7 @@ import com.robertkoszewski.dsce.utils.DS;
 public abstract class DSDevice implements IDSDevice{
 	
 	// Constants
-	private static int MAX_STR_LENGTH = 16;
+	public static final int MAX_STR_LENGTH = 16;
 	
 	/**
 	 * Default Settings Device
@@ -86,7 +90,7 @@ public abstract class DSDevice implements IDSDevice{
 	 */
 	public DSDevice(CurrentStateMessageWrapper csmessage, InetAddress ip) {
 		this(new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER), csmessage, ip);
-		// TODO: Initialize changes listener
+		// TODO: Initialize change listener
 	}
 	
 	/**
@@ -149,10 +153,11 @@ public abstract class DSDevice implements IDSDevice{
 	/**
 	 * Set Name
 	 * @param name
+	 * @throws IOException 
 	 */
-	public void setName(String name) {
+	public void setName(String name) throws IOException {
 		this.name = name == null ? "" : name.length() > MAX_STR_LENGTH ? name.substring(0, MAX_STR_LENGTH) : name;
-		//socket.sendMessage(getIP(), message);
+		socket.sendStaticMessage(getIP(), new DeviceNameMessageWrapper(groupNumber, name).getMessage());
 	}
 
 	/**
@@ -167,7 +172,7 @@ public abstract class DSDevice implements IDSDevice{
 	 * Set Group Name
 	 * @param name
 	 */
-	public void setGroupName(String name) {
+	public void setGroupName(String name) throws IOException{
 		this.groupName = name == null ? "" : name.length() > MAX_STR_LENGTH ? name.substring(0, MAX_STR_LENGTH) : name;
 	}
 	
@@ -183,7 +188,7 @@ public abstract class DSDevice implements IDSDevice{
 	 * Set Group Number
 	 * @param groupNumber
 	 */
-	public void setGroupNumber(byte groupNumber) {
+	public void setGroupNumber(byte groupNumber) throws IOException {
 		this.groupNumber = groupNumber;
 	}
 	
@@ -202,7 +207,7 @@ public abstract class DSDevice implements IDSDevice{
 	 */
 	public void setMode(Mode mode) throws IOException {
 		this.mode = mode.getByte();
-		socket.sendMessage(getIP(), new ModeMessageWrapper(groupNumber, mode).getMessage());
+		socket.sendStaticMessage(getIP(), new ModeMessageWrapper(groupNumber, mode).getMessage());
 	}
 	
 	/**
@@ -222,7 +227,7 @@ public abstract class DSDevice implements IDSDevice{
 		if(brightness > 100 || brightness < 0) 
 			throw new NumberFormatException("Value can only be between 0 and 100");
 		this.brightness = (byte) (brightness & 0xFF);
-		socket.sendMessage(getIP(), new BrightnessMessageWrapper(groupNumber, brightness).getMessage());
+		socket.sendStaticMessage(getIP(), new BrightnessMessageWrapper(groupNumber, brightness).getMessage());
 	}
 	
 	/**
@@ -236,33 +241,58 @@ public abstract class DSDevice implements IDSDevice{
 	/**
 	 * Set  Ambient Color
 	 * @param groupNumber
+	 * @throws IOException 
 	 */
-	public void setAmbientColor(Color color) {
+	public void setAmbientColor(Color color, boolean isFinalState) throws IOException {
 		this.ambientColor = color;
+		socket.sendStaticMessage(getIP(), new AmbientColorMessageWrapper(groupNumber, isFinalState, color).getMessage());
 	}
 	
 	/**
 	 * Set  Ambient Color
 	 * @param groupNumber
+	 * @throws IOException 
 	 */
-	public void setAmbientColor(byte r, byte g, byte b) {
+	public void setAmbientColor(byte r, byte g, byte b, boolean isFinalState) throws IOException {
 		this.ambientColor = new Color(r, g, b);
+		socket.sendStaticMessage(getIP(), new AmbientColorMessageWrapper(groupNumber, isFinalState, this.ambientColor).getMessage());
 	}
 
 	/**
 	 * Set Ambient Scene
 	 * @return
 	 */
-	public byte getAmbientScene() {
-		return this.ambientScene;
+	public AmbientScene getAmbientScene() {
+		return AmbientScene.valueOf(this.ambientScene);
 	}
 	
 	/**
 	 * Set Ambient Scene
 	 * @param groupNumber
+	 * @throws IOException 
 	 */
-	public void setAmbientScene(byte ambientSceneID) {
-		this.ambientScene = ambientSceneID;
+	public void setAmbientScene(AmbientScene ambientScene) throws IOException {
+		this.ambientScene = ambientScene.getByte();
+		socket.sendStaticMessage(getIP(), new AmbientSceneMessageWrapper(groupNumber, ambientScene).getMessage());
+	}
+	
+	/**
+	 * Get Ambient Mode
+	 * @return
+	 */
+	public AmbientMode getAmbientMode() {
+		// return AmbientMode.valueOf(this.ambientMode);
+		return null; // TODO: Is it possible to know this reported by device?
+	}
+
+	/**
+	 * Set Ambient Mode
+	 * @param groupNumber
+	 * @throws IOException 
+	 */
+	public void setAmbientMode(AmbientMode mode) throws IOException {
+		// this.ambientMode = mode.getByte();
+		socket.sendStaticMessage(getIP(), new AmbientModeMessageWrapper(groupNumber, mode).getMessage());
 	}
 
 	// Static Methods
@@ -291,9 +321,8 @@ public abstract class DSDevice implements IDSDevice{
 			return new DreamScreenHD(currentState, deviceIP);
 		case SIDEKICK:
 			return new SideKick(currentState, deviceIP);
-		case UNKNOWN:
 		default:
-			System.out.println("UNKNOWN DEVICE TYPE: " + currentState.getDevice().name()); // TODO: Maybe throw an exception?
+			System.err.println("UNKNOWN DEVICE TYPE: " + currentState.getDevice().name()); // TODO: Maybe throw an exception?
 			return null;
 		}
 	}
@@ -304,15 +333,13 @@ public abstract class DSDevice implements IDSDevice{
 	public static enum Device{
 		DREAMSCREENHD,
 		DREAMSCREEN4K,
-		SIDEKICK,
-		UNKNOWN;
+		SIDEKICK;
 		
 		public byte getByte() {
 			switch(this) {
 			case DREAMSCREENHD: return 0x01;
 			case DREAMSCREEN4K: return 0x02;
 			case SIDEKICK: return 0x03;
-			case UNKNOWN:
 			default:
 				return (byte) 0xFF;
 			}
@@ -327,7 +354,7 @@ public abstract class DSDevice implements IDSDevice{
 			case 0x03:
 				return Device.SIDEKICK;
 			default:
-				return Device.UNKNOWN;
+				return null;
 			}
 		}
 	}
@@ -336,32 +363,97 @@ public abstract class DSDevice implements IDSDevice{
 	 * Device Mode
 	 */
 	public enum Mode{
-		SLEEP,
-		VIDEO,
-		MUSIC,
-		AMBIENT,
-		UNKNOWN;
+		SLEEP 	(DSMessage.MODE_SLEEP_PAYLOAD),
+		VIDEO	(DSMessage.MODE_VIDEO_PAYLOAD),
+		MUSIC	(DSMessage.MODE_MUSIC_PAYLOAD),
+		AMBIENT	(DSMessage.MODE_AMBIENT_PAYLOAD);
+		
+		private final byte value;
+		
+		Mode(byte value) {
+			this.value = value;
+		}
 		
 		public byte getByte() {
-			switch(this) {
-			case SLEEP: return 0x00;
-			case VIDEO: return 0x01;
-			case MUSIC: return 0x02;
-			case AMBIENT: return 0x03;
-			case UNKNOWN:
-			default:
-				return (byte) 0xFF;
-			}
+			return this.value;
 		}
 		
 		public static Mode valueOf(byte modeByte) {
 			switch(modeByte) {
-			case 0x00: return SLEEP;
-			case 0x01: return VIDEO;
-			case 0x02: return MUSIC;
-			case 0x03: return AMBIENT;
+			case DSMessage.MODE_SLEEP_PAYLOAD: return SLEEP;
+			case DSMessage.MODE_VIDEO_PAYLOAD: return VIDEO;
+			case DSMessage.MODE_MUSIC_PAYLOAD: return MUSIC;
+			case DSMessage.MODE_AMBIENT_PAYLOAD: return AMBIENT;
 			default:
-				return UNKNOWN;
+				return null;
+			}
+		}
+	}
+	
+	/**
+	 * Ambient Scene
+	 */
+	public enum AmbientScene{
+		RANDOMCOLOR	(DSMessage.AMBIENT_SCENE_RANDOM_COLOR),
+		FIRESIDE	(DSMessage.AMBIENT_SCENE_FIRESIDE_PAYLOAD),
+		TWINKLE		(DSMessage.AMBIENT_SCENE_TWINKLE_PAYLOAD),
+		OCEAN		(DSMessage.AMBIENT_SCENE_OCEAN_PAYLOAD),
+		RAINBOW		(DSMessage.AMBIENT_SCENE_RAINBOW_PAYLOAD),
+		JULY4TH		(DSMessage.AMBIENT_SCENE_JULY4TH_PAYLOAD),
+		HOLIDAY		(DSMessage.AMBIENT_SCENE_HOLIDAY_PAYLOAD),
+		POP			(DSMessage.AMBIENT_SCENE_POP_PAYLOAD),
+		ENCHANTEDFOREST(DSMessage.AMBIENT_SCENE_ENCHANTED_FOREST_PAYLOAD);
+		
+		private final byte value;
+		
+		AmbientScene(byte value) {
+			this.value = value;
+		}
+		
+		public byte getByte() {
+			return this.value;
+		}
+		
+		public static AmbientScene valueOf(byte ambientSceneByte) {
+			switch(ambientSceneByte) {
+			case DSMessage.AMBIENT_SCENE_RANDOM_COLOR: return RANDOMCOLOR;
+			case DSMessage.AMBIENT_SCENE_FIRESIDE_PAYLOAD: return FIRESIDE;
+			case DSMessage.AMBIENT_SCENE_TWINKLE_PAYLOAD: return TWINKLE;
+			case DSMessage.AMBIENT_SCENE_OCEAN_PAYLOAD: return OCEAN;
+			case DSMessage.AMBIENT_SCENE_RAINBOW_PAYLOAD: return RAINBOW;
+			case DSMessage.AMBIENT_SCENE_JULY4TH_PAYLOAD: return JULY4TH;
+			case DSMessage.AMBIENT_SCENE_HOLIDAY_PAYLOAD: return HOLIDAY;
+			case DSMessage.AMBIENT_SCENE_POP_PAYLOAD: return POP;
+			case DSMessage.AMBIENT_SCENE_ENCHANTED_FOREST_PAYLOAD: return ENCHANTEDFOREST;
+			default:
+				return null;
+			}
+		}
+	}
+	
+	/**
+	 * Undocumented: Ambient Mode
+	 */
+	public enum AmbientMode{
+		RGB	(DSMessage.AMBIENT_MODE_TYPE_RGB_COLOR_PAYLOAD),
+		SCENE	(DSMessage.AMBIENT_MODE_TYPE_SCENE_PAYLOAD);
+
+		private final byte value;
+		
+		AmbientMode(byte value) {
+			this.value = value;
+		}
+		
+		public byte getByte() {
+			return this.value;
+		}
+		
+		public static AmbientMode valueOf(byte ambientModeByte) {
+			switch(ambientModeByte) {
+			case DSMessage.AMBIENT_MODE_TYPE_RGB_COLOR_PAYLOAD: return RGB;
+			case DSMessage.AMBIENT_MODE_TYPE_SCENE_PAYLOAD: return SCENE;
+			default:
+				return null;
 			}
 		}
 	}

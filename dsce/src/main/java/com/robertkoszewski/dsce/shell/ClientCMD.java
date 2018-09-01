@@ -21,6 +21,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *******************************************************************************/
 package com.robertkoszewski.dsce.shell;
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,6 +30,7 @@ import java.net.UnknownHostException;
 import com.robertkoszewski.dsce.client.DSClient;
 import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DreamScreenHD;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
 import com.robertkoszewski.dsce.client.server.SocketListener;
@@ -149,25 +151,24 @@ public class ClientCMD {
 				
 				// Create a new Shell Context
 				ShellContext shell_client = new ShellContext("Control>" + device.getName() + "@" + device.getIP().getHostAddress() + ">");
-				
-				// COMMAND: exit
-				shell_client.addCommand("exit", new Command() {
-					@Override public void run(ShellContext context, String args) { context.exit(); }
-					@Override public String help() { return "Returns to previous menu"; }
-					@Override public String description() { return "Returns to previous menu"; }
-				});
 
 				// COMMAND: name
 				shell_client.addCommand("name", new Command() {
 					@Override public void run(ShellContext context, String args) { 
-						if(args == null)
+						if(args == null) {
 							System.out.println(device.getName()); 
-						else
-							device.setName(args);
+						}else {
+							try {
+								device.setName(args);
+							} catch (IOException e) {
+								System.err.println("ERROR: Could not change device name. Reason: " + e.getMessage());
+							}
+						}
+							
 					}
-					@Override public String help() { return "Get/Set Device Name. With no parameters, "
+					@Override public String help() { return "Get/Set Name. With no parameters, "
 							+ "the value will be returned. With parameters, the parameter value will be set on the device,"; }
-					@Override public String description() { return "Get/Set Device Name"; }
+					@Override public String description() { return "Get/Set Name"; }
 				});
 				
 				// COMMAND: mode
@@ -176,28 +177,18 @@ public class ClientCMD {
 						if(args == null) {
 							System.out.println(device.getMode().name()); 
 						} else {
-							try {
-								device.setMode(DSDevice.Mode.valueOf(args.trim().toUpperCase()));
-							}catch(Exception e) {
-								System.err.print("ERROR: Unknown mode. Valid modes are: ");
-								
-								Mode[] values = DSDevice.Mode.values();
-								boolean first = true;
-								for(Mode value: values) {
-									if(first) {
-										System.out.print(value.name());
-										first = false;
-									}else {
-										System.out.print(", " + value.name());
-									}
+								try {
+									device.setMode(DSDevice.Mode.valueOf(args.trim().toUpperCase()));
+								} catch (IOException e) {
+									e.printStackTrace();
+								} catch(Exception e) {
+									System.err.println("ERROR: Unknown mode. Valid modes are: " + listAllEnums(DSDevice.Mode.values()));
 								}
-								System.out.println(""); // New Line
-							}
 						}
 					}
-					@Override public String help() { return "Get/Set Device Mode. With no parameters, "
+					@Override public String help() { return "Get/Set Mode. With no parameters, "
 							+ "the value will be returned. With parameters, the parameter value will be set on the device,"; }
-					@Override public String description() { return "Get/Set Device Mode"; }
+					@Override public String description() { return "Get/Set Mode"; }
 				});
 				
 				// COMMAND: brightness
@@ -214,11 +205,49 @@ public class ClientCMD {
 							}
 						}	
 					}
-					@Override public String help() { return "Get/Set Device Brightness. With no parameters, "
+					@Override public String help() { return "Get/Set Brightness. With no parameters, "
 							+ "the value will be returned. With parameters, the parameter value will be set on the device,"; }
-					@Override public String description() { return "Get/Set Device Brightness"; }
+					@Override public String description() { return "Get/Set Brightness"; }
 				});
 				
+				// COMMAND: ambientscene
+				shell_client.addCommand("ambientscene", new Command() {
+					@Override public void run(ShellContext context, String args) { 
+						if(args == null) {
+							System.out.println(device.getAmbientScene().name()); 
+						} else {
+							try {
+								device.setAmbientScene(DSDevice.AmbientScene.valueOf(args.trim().toUpperCase()));
+							}catch(Exception e) {
+								System.err.println("ERROR: Unknown mode. Valid modes are: " + listAllEnums(DSDevice.AmbientScene.values()));
+							}
+						}
+					}
+					@Override public String help() { return "Get/Set Device Ambient Scene. With no parameters, "
+							+ "the value will be returned. With parameters, the parameter value will be set on the device."; }
+					@Override public String description() { return "Get/Set Ambient Scene"; }
+				});
+				
+				// COMMAND: ambientcolor
+				shell_client.addCommand("ambientcolor", new Command() {
+					@Override public void run(ShellContext context, String args) { 
+						if(args == null) {
+							System.out.println(device.getAmbientColor().toString()); 
+						} else {
+							try {
+								device.setMode(Mode.AMBIENT);
+								device.setAmbientMode(AmbientMode.RGB);
+								device.setAmbientColor(Color.decode(args), true);
+							}catch(Exception e) {
+								System.err.println("ERROR: Unknown color. " + e.getMessage());
+							}
+						}
+					}
+					@Override public String help() { return "Get/Set Device Ambient Color. With no parameters, "
+							+ "the value will be returned. In order to set the color the first parameter must be a hex encoded color ex. #FF0033"; }
+					@Override public String description() { return "Get/Set Device Ambient Color"; }
+				});
+
 				// COMMAND: info
 				shell_client.addCommand("info", new Command() {
 					@Override
@@ -270,13 +299,6 @@ public class ClientCMD {
 				// Create a new Shell Context
 				ShellContext shell_emu = new ShellContext("Emulator>");
 				
-				// COMMAND: exit
-				shell_emu.addCommand("exit", new Command() {
-					@Override public void run(ShellContext context, String args) { context.exit(); }
-					@Override public String help() { return "Returns to previous menu"; }
-					@Override public String description() { return "Returns to previous menu"; }
-				});
-				
 				// COMMAND: start
 				shell_emu.addCommand("start", new Command() {
 
@@ -298,7 +320,6 @@ public class ClientCMD {
 								case SIDEKICK:
 									services.emu = new SideKickEmulator(socket);
 									break;
-								case UNKNOWN:
 								default:
 									System.err.println("ERROR: Cannot start an unknown device.");
 									return;
@@ -308,19 +329,7 @@ public class ClientCMD {
 								System.out.println("Emulator Started");
 								
 							}catch(Exception e) {
-								System.err.print("ERROR: Unknown Device Type. Valid Devices are: ");
-								
-								Device[] values = DSDevice.Device.values();
-								boolean first = true;
-								for(Device value: values) {
-									if(first) {
-										System.out.print(value.name());
-										first = false;
-									}else {
-										System.out.print(", " + value.name());
-									}
-								}
-								System.out.println(""); // New Line
+								System.err.println("ERROR: Unknown Device Type. Valid Devices are: " + listAllEnums(DSDevice.Device.values()));
 							}
 						}else {
 							System.err.println("Emulator is already running. Stop it before starting a new one.");
@@ -434,25 +443,6 @@ public class ClientCMD {
 				return "Display messages received from DreamSreen devices";
 			}
 		});
-		
-		// COMMAND: exit
-		shell.addCommand("exit", new Command() {
-
-			@Override
-			public void run(ShellContext context, String args) {
-				context.exit();
-			}
-
-			@Override
-			public String help() {
-				return "Closes the CLI and exists the application";
-			}
-
-			@Override
-			public String description() {
-				return "Closes the CLI and exists the application";
-			}
-		});
 
 		// Run Shell
 		System.out.println("====================================================================");
@@ -461,65 +451,25 @@ public class ClientCMD {
 		shell.showCommandList();
 		System.out.println("====================================================================");
 		shell.run();
-		
-		
-		/*
-		
-		
-		while(!leave) {
-			command = br.readLine();
-		
-			case "clone":
-				if(dsemu == null) {
-					System.out.println("DS Emulator not running. Aborting..");
-					break;
-				}
-				System.out.println("Connecting to device");
-				DSDevice cdevice = client.getClient("192.168.2.220");
-				if(cdevice == null)
-					System.out.println("Device not found");
-				else
-					System.out.println("DEVICE TYPE: " + cdevice.getDeviceType().name());
-					System.out.println("getName: " + cdevice.getName());
-					
-					System.out.println("getAmbientScene: " + cdevice.getAmbientScene());
-					System.out.println("getBrightness: " + cdevice.getBrightness());
-					System.out.println("getGroupName: " + cdevice.getGroupName());
-					System.out.println("getGroupNumber: " + cdevice.getGroupNumber());
-					System.out.println("getMode: " + cdevice.getMode());
-					System.out.println("getAmbientColor: " + cdevice.getAmbientColor().toString());
-					
-					if(cdevice.getDeviceType() == Device.DREAMSCREENHD) {
-						DreamScreenHD cdsdevice = (DreamScreenHD) cdevice;
-						
-						System.out.println("getHDMIActiveChannels: " + cdsdevice.getHDMIActiveChannels());
-						System.out.println("getHDMIInput: " + cdsdevice.getHDMIInput());
-						System.out.println("getHDMIInput1Name: " + cdsdevice.getHDMIInput1Name());
-						System.out.println("getHDMIInput2Name: " + cdsdevice.getHDMIInput2Name());
-						System.out.println("getHDMIInput3Name: " + cdsdevice.getHDMIInput3Name());
-					}
-					
-					dsemu.replicate(cdevice);
-					System.out.println("Replicated sucessfully");
-				break;
-
-			
-			case "dsemu":
-				System.out.println("Starting DreamScreen Emulator");
-				dsemu = new DreamScreenHDEmulator(socket);
-				dsemu.start();
-				break;
-				
-			case "skemu":
-				System.out.println("Starting SideKick Emulator");
-				SideKickEmulator semu = new SideKickEmulator(socket);
-				semu.start();
-				break;
-
+	}
+	
+	/**
+	 * List All Enums
+	 * @param values
+	 * @return
+	 */
+	private static <E extends Enum<E>> String listAllEnums(Enum<E>[] values) {
+		String out = "";
+		boolean first = true;
+		for(Enum<E> value: values) {
+			if(first) {
+				out += value.name();
+				first = false;
+			}else {
+				out += ", " + value.name();
 			}
-			
 		}
-		*/
+		return out;
 	}
 	
 	/**

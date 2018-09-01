@@ -80,7 +80,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		mode = DSMessage.MODE_MUSIC_PAYLOAD;
 		brightness = 0;
 		ambientColor = new Color(0,0,0);
-		ambientScene = DSMessage.AMBIENT_SCENE_FIRESIDE_PAYLOAD[0];
+		ambientScene = DSMessage.AMBIENT_SCENE_FIRESIDE_PAYLOAD;
 	}
 	
 	// Device Status
@@ -273,7 +273,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void replicate(DSDevice device) {
 		this.name = device.getName();
-		this.ambientScene = device.getAmbientScene();
+		this.ambientScene = device.getAmbientScene().getByte();
 		this.brightness = (byte) device.getBrightness();
 		this.groupName = device.getGroupName();
 		this.groupNumber = device.getGroupNumber();

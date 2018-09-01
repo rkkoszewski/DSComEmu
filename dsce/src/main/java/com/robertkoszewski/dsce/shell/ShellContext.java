@@ -78,6 +78,25 @@ public class ShellContext {
 				return "Here you can find information about the available commands";
 			}
 		});
+		
+		// - Exit Command
+		addCommand("exit", new Command() {
+
+			@Override
+			public void run(ShellContext context, String args) {
+				context.exit();
+			}
+
+			@Override
+			public String help() {
+				return "Returns to previous menu or exits the application when no more menus are left.";
+			}
+
+			@Override
+			public String description() {
+				return "Returns to previous menu or exits the application";
+			}
+		});
 	}
 	
 	// Variables
