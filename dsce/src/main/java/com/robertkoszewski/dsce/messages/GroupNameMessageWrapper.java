@@ -22,48 +22,51 @@
  *******************************************************************************/
 package com.robertkoszewski.dsce.messages;
 
+import com.robertkoszewski.dsce.client.devices.DSDevice;
+
 /**
- * Brightness Message
+ * Group Name Message
  * @author Robert Koszewski
  */
-public class BrightnessMessageWrapper extends DSMessageWrapper{
+public class GroupNameMessageWrapper extends DSMessageWrapper{
 
 	// Constructor
 	
-	public BrightnessMessageWrapper(byte group) {
-		// Create Empty Current State Message
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_BRIGHTNESS, DSMessage.COMMAND_LOWER_BRIGHTNESS, new byte[1]));
+	public GroupNameMessageWrapper(byte group) {
+		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_GROUP_NAME, DSMessage.COMMAND_LOWER_GROUP_NAME, new byte[0]));
 	}
 	
-	public BrightnessMessageWrapper(byte group, int brightness) {
+	public GroupNameMessageWrapper(byte group, String groupName) {
 		this(group);
-		setBrightness(brightness);
+		setGroupName(groupName);
 	}
 	
-	public BrightnessMessageWrapper(DSMessage message) {
+	public GroupNameMessageWrapper(DSMessage message) {
 		super(message);
 	}
 
 	// Methods
 	
 	/**
-	 * Get Mode
+	 * Get Device Name
 	 * @return
 	 */
-	public int getBrightness() {
-		return message.getPayload()[0];
+	public String getGroupName() {
+		return new String(message.getPayload());
 	}
 
 	/**
-	 * Set Mode
+	 * Set Device Name
 	 * @param mode
 	 */
-	public void setBrightness(int brightness) {
-		brightness = Math.max(0, Math.min(100, brightness));
-		message.getPayload()[0] = (byte) (brightness & 0xFF);
+	public void setGroupName(String deviceName) {
+		deviceName = deviceName == null ? "" : 
+			deviceName.length() > DSDevice.MAX_STR_LENGTH ? 
+					deviceName.substring(0, DSDevice.MAX_STR_LENGTH) : 
+						deviceName;
+		message.setPayload(deviceName.getBytes());		
 	}
 	
 	// Flags
 	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
-	
 }

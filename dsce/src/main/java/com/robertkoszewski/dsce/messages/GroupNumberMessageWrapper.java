@@ -23,24 +23,23 @@
 package com.robertkoszewski.dsce.messages;
 
 /**
- * Brightness Message
+ * Set Group Number Message
  * @author Robert Koszewski
  */
-public class BrightnessMessageWrapper extends DSMessageWrapper{
+public class GroupNumberMessageWrapper extends DSMessageWrapper{
 
 	// Constructor
 	
-	public BrightnessMessageWrapper(byte group) {
-		// Create Empty Current State Message
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_BRIGHTNESS, DSMessage.COMMAND_LOWER_BRIGHTNESS, new byte[1]));
+	public GroupNumberMessageWrapper(byte group) {
+		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_GROUP_NUMBER, DSMessage.COMMAND_LOWER_GROUP_NUMBER, new byte[1]));
 	}
 	
-	public BrightnessMessageWrapper(byte group, int brightness) {
+	public GroupNumberMessageWrapper(byte group, byte groupNumber) {
 		this(group);
-		setBrightness(brightness);
+		setGroupNumber(groupNumber);
 	}
 	
-	public BrightnessMessageWrapper(DSMessage message) {
+	public GroupNumberMessageWrapper(DSMessage message) {
 		super(message);
 	}
 
@@ -50,7 +49,7 @@ public class BrightnessMessageWrapper extends DSMessageWrapper{
 	 * Get Mode
 	 * @return
 	 */
-	public int getBrightness() {
+	public byte getGroupNumber() {
 		return message.getPayload()[0];
 	}
 
@@ -58,12 +57,10 @@ public class BrightnessMessageWrapper extends DSMessageWrapper{
 	 * Set Mode
 	 * @param mode
 	 */
-	public void setBrightness(int brightness) {
-		brightness = Math.max(0, Math.min(100, brightness));
-		message.getPayload()[0] = (byte) (brightness & 0xFF);
+	public void setGroupNumber(byte groupNumber) {
+		message.getPayload()[0] = groupNumber;
 	}
 	
 	// Flags
 	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
-	
 }

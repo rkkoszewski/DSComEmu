@@ -33,13 +33,11 @@ public class AmbientColorMessageWrapper extends DSMessageWrapper{
 	// Constructor
 	
 	public AmbientColorMessageWrapper(byte group) {
-		// Create Empty Current State Message
 		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_AMBIENT_COLOR, DSMessage.COMMAND_LOWER_AMBIENT_COLOR, new byte[3]));
 	}
 	
-	public AmbientColorMessageWrapper(byte group, boolean isFinalState, Color ambientColor) {
+	public AmbientColorMessageWrapper(byte group, Color ambientColor) {
 		this(group);
-		this.isFinalState = isFinalState;
 		setAmbientColor(ambientColor);
 	}
 	
@@ -47,9 +45,6 @@ public class AmbientColorMessageWrapper extends DSMessageWrapper{
 		super(message);
 	}
 	
-	// Variables
-	private boolean isFinalState = true;
-
 	// Methods
 	
 	/**
@@ -58,7 +53,7 @@ public class AmbientColorMessageWrapper extends DSMessageWrapper{
 	 */
 	public Color getAmbientColor() {
 		byte[] payload = message.getPayload();
-		return new Color(payload[0], payload[1], payload[2]);
+		return new Color(payload[0] & 0xFF, payload[1] & 0xFF, payload[2] & 0xFF);
 	}
 
 	/**
@@ -72,14 +67,8 @@ public class AmbientColorMessageWrapper extends DSMessageWrapper{
 		payload[2] = (byte) ((byte) color.getBlue() & 0xFF);
 	}
 	
-	@Override
-	public DSMessage getMessage() {
-		DSMessage message = super.getMessage();
-		if(isFinalState) {
-			message.setFlags((byte)0x11); // Final State ?? (Guessing)
-		}else {
-			message.setFlags((byte)0x01); // NonFinal State ?? (Guessing)
-		}
-		return message;
-	}
+	// Flags
+	public static final byte FLAG_UNICAST_GROUP = DSMessage.FLAG_UNICAST;
+	public static final byte FLAG_UNICAST_LOCAL = 0x01;
+	
 }

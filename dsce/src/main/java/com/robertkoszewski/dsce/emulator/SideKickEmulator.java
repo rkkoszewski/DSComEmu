@@ -22,9 +22,15 @@
  *******************************************************************************/
 package com.robertkoszewski.dsce.emulator;
 
+import java.io.IOException;
+import java.net.InetAddress;
+
 import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
+import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.messages.DSMessage;
+import com.robertkoszewski.dsce.messages.SectorSettingsMessageWrapper;
 
 /**
  * SideKick Emulator
@@ -36,9 +42,63 @@ public class SideKickEmulator extends GenericEmulator {
 		super();
 	}
 	
-	public SideKickEmulator(SocketListener socket) {
+	public SideKickEmulator(final SocketListener socket) {
 		super(socket);
+
+		// Responses
+		callbacks.add(new MessageReceived() {
+			@Override
+			public void run(DSMessage message, InetAddress senderIP, int senderPort) {
+				// Discard message targeted to other group
+				byte targetGroup = message.getGroupAddress();
+				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
+					System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
+					return;
+				}
+				
+				// Supported Commands
+				switch(message.getCommand()) {
+				case SECTOR_SETTING: // Set Sector Settings
+					sectorSettings = new SectorSettingsMessageWrapper(message).getSectorSettings();
+					break;
+					
+				case UNKNOWN_DS_PING:
+					// TODO: Find out what this message means. A DreamScreen device sends this out to a SideKick in a Group. Is probably eider a ping or a request to know the sector settings of the device.
+					
+					System.out.println("Sending Test Message");
+					DSMessage test_message = new DSMessage(getGroupNumber(), 
+							(byte) 0x30, // Flags
+							DSMessage.COMMAND_UPPER_SECTOR_SETTING, // Command Upper
+							DSMessage.COMMAND_LOWER_SECTOR_SETTING, // Command Lower
+							sectorSettings); // Payload
+					
+					/*
+					DSMessage test_message = new DSMessage(getGroupNumber(), 
+							(byte) 0x33, // Flags
+							DSMessage.COMMAND_UPPER_UNKNOWN_DS_PING, // Command Upper
+							DSMessage.COMMAND_LOWER_UNKNOWN_DS_PING); // Command Lower
+					*/
+
+					try {
+						socket.sendStaticMessage(senderIP, test_message.getMessage());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					break;
+
+				// Ignore any other commands
+				default: break; 
+				}
+			}
+		});
 	}
+	
+	// Variables
+	private byte[] sectorSettings = new byte[30];
+	
+	// Methods
+	
+	// TODO: Research how Sector Settings are working (How to parse and generate data)
 
 	@Override
 	public Device getDeviceType() {

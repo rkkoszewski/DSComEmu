@@ -26,7 +26,9 @@ import java.awt.Color;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import com.robertkoszewski.dsce.client.devices.DSDevice;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
+import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
 import com.robertkoszewski.dsce.utils.ArrayUtils;
 
 /**
@@ -131,11 +133,19 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 
 	/**
 	 * Set Mode
-	 * @param groupNumber
+	 * @param mode
 	 */
 	public void setMode(byte mode) {
 		byte[] payload = message.getPayload();
 		payload[33] = mode;
+	}
+	
+	/**
+	 * Set Mode
+	 * @param mode
+	 */
+	public void setMode(Mode mode) {
+		setMode(mode.getByte());
 	}
 	
 	/**
@@ -148,12 +158,22 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	}
 
 	/**
-	 * Set Mode
-	 * @param groupNumber
+	 * Set Brightness
+	 * @param brightness
 	 */
 	public void setBrightness(byte brightness) {
 		byte[] payload = message.getPayload();
 		payload[34] = brightness;
+	}
+	
+	/**
+	 * Set Brightness
+	 * @param brightness
+	 */
+	public void setBrigthness(int brightness) {
+		if(brightness > 100 || brightness < 0) 
+			throw new NumberFormatException("Value can only be between 0 and 100");
+		setBrightness((byte) (brightness & 0xFF));
 	}
 	
 	/**
@@ -166,16 +186,18 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	}
 
 	/**
-	 * Set  Ambient Color
-	 * @param groupNumber
+	 * 
+	 * @param color
 	 */
 	public void setAmbientColor(Color color) {
 		setAmbientColor((byte)color.getRed(), (byte)color.getGreen(), (byte)color.getBlue());
 	}
 	
 	/**
-	 * Set  Ambient Color
-	 * @param groupNumber
+	 * Set Ambient Color
+	 * @param r
+	 * @param g
+	 * @param b
 	 */
 	public void setAmbientColor(byte r, byte g, byte b) {
 		byte[] payload = message.getPayload();
@@ -195,13 +217,20 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	
 	/**
 	 * Set Ambient Scene
-	 * @param groupNumber
+	 * @param ambientSceneID
 	 */
 	public void setAmbientScene(byte ambientSceneID) {
 		byte[] payload = message.getPayload();
 		payload[62] = ambientSceneID;
 	}
 	
+	/**
+	 * Set Ambient Scene
+	 * @param ambientScene
+	 */
+	public void setAmbientScene(AmbientScene ambientScene) {
+		setAmbientScene(ambientScene.getByte());
+	}
 	
 	/**
 	 * Set HDMI Input
@@ -215,7 +244,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	
 	/**
 	 * Set HDMI Input
-	 * @param groupNumber
+	 * @param HDMIInput
 	 */
 	public void setHDMIInput(byte HDMIInput) {
 		byte[] payload = message.getPayload();
@@ -292,7 +321,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	
 	/**
 	 * Set HDMI Input
-	 * @param groupNumber
+	 * @param activeChannels
 	 */
 	public void setActiveChannels(byte activeChannels) {
 		byte[] payload = message.getPayload();
@@ -303,5 +332,8 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	// Static Variables
 	public static final int SIDEKICK_PAYLOAD_SIZE = 63;
 	public static final int DREAMSCREEN_PAYLOAD_SIZE = 141;
+	
+	// Flags
+	public static final byte FLAG_STATUS = DSMessage.FLAG_STATUS;
 
 }

@@ -50,8 +50,8 @@ public class DSDebugger {
 					(payload.length != 0 ? 
 							" | Payload: 0x" + StringUtils.bytesToHex(message.getPayload()) +
 							" | Payload (char): " + new String(message.getPayload())
-							: "")
-					);
+							: "") +
+					" | Command: " + message.getCommand().name());
 		}
 	};
 	

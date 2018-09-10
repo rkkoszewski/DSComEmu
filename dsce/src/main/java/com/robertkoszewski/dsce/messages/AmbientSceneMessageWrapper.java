@@ -52,7 +52,7 @@ public class AmbientSceneMessageWrapper extends DSMessageWrapper{
 	 * Get Ambient Scene
 	 * @return
 	 */
-	public AmbientScene setAmbientScene() {
+	public AmbientScene getAmbientScene() {
 		return AmbientScene.valueOf(message.getPayload()[0]);
 	}
 
@@ -63,4 +63,8 @@ public class AmbientSceneMessageWrapper extends DSMessageWrapper{
 	public void setAmbientScene(AmbientScene mode) {
 		message.getPayload()[0] = mode.getByte();
 	}
+	
+	// Flags
+	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
+	
 }

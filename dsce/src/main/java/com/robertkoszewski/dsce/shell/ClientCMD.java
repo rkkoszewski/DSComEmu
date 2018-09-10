@@ -31,6 +31,7 @@ import com.robertkoszewski.dsce.client.DSClient;
 import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DreamScreenHD;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
 import com.robertkoszewski.dsce.client.server.SocketListener;
@@ -38,8 +39,9 @@ import com.robertkoszewski.dsce.debugger.DSDebugger;
 import com.robertkoszewski.dsce.emulator.DreamScreen4KEmulator;
 import com.robertkoszewski.dsce.emulator.DreamScreenHDEmulator;
 import com.robertkoszewski.dsce.emulator.GenericEmulator;
-import com.robertkoszewski.dsce.emulator.SideKickEmulator;
+import com.robertkoszewski.dsce.emulator.variant.SwingSideKickEmulator;
 import com.robertkoszewski.dsce.utils.DS;
+import com.robertkoszewski.dsce.utils.StringUtils;
 
 /**
  * DS Client Shell
@@ -168,7 +170,7 @@ public class ClientCMD {
 					}
 					@Override public String help() { return "Get/Set Name. With no parameters, "
 							+ "the value will be returned. With parameters, the parameter value will be set on the device,"; }
-					@Override public String description() { return "Get/Set Name"; }
+					@Override public String description() { return "Get/Set Device Name"; }
 				});
 				
 				// COMMAND: mode
@@ -188,7 +190,7 @@ public class ClientCMD {
 					}
 					@Override public String help() { return "Get/Set Mode. With no parameters, "
 							+ "the value will be returned. With parameters, the parameter value will be set on the device,"; }
-					@Override public String description() { return "Get/Set Mode"; }
+					@Override public String description() { return "Get/Set Device Mode"; }
 				});
 				
 				// COMMAND: brightness
@@ -217,7 +219,10 @@ public class ClientCMD {
 							System.out.println(device.getAmbientScene().name()); 
 						} else {
 							try {
-								device.setAmbientScene(DSDevice.AmbientScene.valueOf(args.trim().toUpperCase()));
+								AmbientScene scene = DSDevice.AmbientScene.valueOf(args.trim().toUpperCase());
+								device.setMode(Mode.AMBIENT);
+								device.setAmbientMode(AmbientMode.SCENE);
+								device.setAmbientScene(scene);
 							}catch(Exception e) {
 								System.err.println("ERROR: Unknown mode. Valid modes are: " + listAllEnums(DSDevice.AmbientScene.values()));
 							}
@@ -235,9 +240,10 @@ public class ClientCMD {
 							System.out.println(device.getAmbientColor().toString()); 
 						} else {
 							try {
+								Color color = Color.decode(args);
 								device.setMode(Mode.AMBIENT);
 								device.setAmbientMode(AmbientMode.RGB);
-								device.setAmbientColor(Color.decode(args), true);
+								device.setAmbientColor(color, true);
 							}catch(Exception e) {
 								System.err.println("ERROR: Unknown color. " + e.getMessage());
 							}
@@ -248,6 +254,94 @@ public class ClientCMD {
 					@Override public String description() { return "Get/Set Device Ambient Color"; }
 				});
 
+				// Dream Screen HD and Dream Screen 4K settings
+				if(device instanceof DreamScreenHD) {
+					final DreamScreenHD hddevice = (DreamScreenHD) device;
+					
+					// COMMAND: HDMI Name 1
+					shell_client.addCommand("hdminame1", new Command() {
+						@Override
+						public void run(ShellContext context, String args) {
+							if(args == null) {
+								System.out.println(hddevice.getHDMIInput1Name()); 
+							} else {
+								try {
+									hddevice.setHDMIInput1Name(args);
+								}catch(Exception e) {
+									System.err.println("ERROR: Could not update input Name.");
+								}
+							}
+						}
+						@Override public String help() { return description() + ". No parameters shows the current input name. With parameter sets the name of the input."; }
+						@Override public String description() { return "Shows the name of the HDMI Input 1"; }
+					});
+					
+					// COMMAND: HDMI Name 2
+					shell_client.addCommand("hdminame2", new Command() {
+						@Override
+						public void run(ShellContext context, String args) {
+							if(args == null) {
+								System.out.println(hddevice.getHDMIInput2Name()); 
+							} else {
+								try {
+									hddevice.setHDMIInput2Name(args);
+								}catch(Exception e) {
+									System.err.println("ERROR: Could not update input Name.");
+								}
+							}
+						}
+						@Override public String help() { return description() + ". No parameters shows the current input name. With parameter sets the name of the input."; }
+						@Override public String description() { return "Shows the name of the HDMI Input 2"; }
+					});
+					
+					// COMMAND: HDMI Name 3
+					shell_client.addCommand("hdminame3", new Command() {
+						@Override
+						public void run(ShellContext context, String args) {
+							if(args == null) {
+								System.out.println(hddevice.getHDMIInput3Name()); 
+							} else {
+								try {
+									hddevice.setHDMIInput3Name(args);
+								}catch(Exception e) {
+									System.err.println("ERROR: Could not update input Name.");
+								}
+							}
+						}
+						@Override public String help() { return description() + ". No parameters shows the current input name. With parameter sets the name of the input."; }
+						@Override public String description() { return "Shows the name of the HDMI Input 3"; }
+					});
+					
+					// COMMAND: HDMI Input
+					shell_client.addCommand("hdmiinput", new Command() {
+						@Override
+						public void run(ShellContext context, String args) {
+							if(args == null) {
+								System.out.println(hddevice.getHDMIInput()); 
+							} else {
+								try {
+									hddevice.setHDMIInput(Integer.parseInt(args));
+								}catch(Exception e) {
+									System.err.println("ERROR: Could not update input Name. Allowed input numbers are 1 to 3.");
+								}
+							}
+						}
+						@Override public String help() { return description() + ". No parameters shows the current input name. With parameter sets the name of the input."; }
+						@Override public String description() { return "Shows and sets the current HDMI Input"; }
+					});
+					
+					// COMMAND: HDMI Active Channels
+					shell_client.addCommand("hdmiactivechannels", new Command() {
+						@Override
+						public void run(ShellContext context, String args) {
+							System.out.println("0x"+StringUtils.bytesToHex(hddevice.getHDMIActiveChannels())); 
+						}
+						@Override public String help() { return description() + ". No parameters are required."; }
+						@Override public String description() { return "Shows the HDMI Active Channels"; }
+					});
+
+				}
+				
 				// COMMAND: info
 				shell_client.addCommand("info", new Command() {
 					@Override
@@ -318,7 +412,7 @@ public class ClientCMD {
 									services.emu = new DreamScreenHDEmulator(socket);
 									break;
 								case SIDEKICK:
-									services.emu = new SideKickEmulator(socket);
+									services.emu = new SwingSideKickEmulator(socket);
 									break;
 								default:
 									System.err.println("ERROR: Cannot start an unknown device.");

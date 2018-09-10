@@ -23,7 +23,6 @@
 package com.robertkoszewski.dsce.messages;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
-import com.robertkoszewski.dsce.utils.StringUtils;
 
 /**
  * Mode Message
@@ -35,7 +34,7 @@ public class AmbientModeMessageWrapper extends DSMessageWrapper{
 	
 	public AmbientModeMessageWrapper(byte group) {
 		// Create Empty Current State Message
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_AMBIENT_MODE_TYPE, DSMessage.COMMAND_LOWER_AMBIENT_MODE_TYPE, new byte[1]));
+		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_AMBIENT_MODE, DSMessage.COMMAND_LOWER_AMBIENT_MODE, new byte[1]));
 	}
 	
 	public AmbientModeMessageWrapper(byte group, AmbientMode mode) {
@@ -65,13 +64,7 @@ public class AmbientModeMessageWrapper extends DSMessageWrapper{
 		message.getPayload()[0] = mode.getByte();
 	}
 	
-	// Overrides
+	// Flags	
+	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
 	
-	@Override
-	public DSMessage getMessage() {
-		DSMessage message = super.getMessage();
-		message.setFlags((byte)0x11);
-		System.out.println("SEDING: 0x" + StringUtils.bytesToHex(message.getMessage()));
-		return message;
-	}
 }

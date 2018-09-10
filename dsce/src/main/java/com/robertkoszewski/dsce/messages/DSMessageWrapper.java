@@ -54,10 +54,8 @@ public abstract class DSMessageWrapper {
 	 * Get Message
 	 * @return
 	 */
-	public DSMessage getMessage() {
-		return this.message;
+	public DSMessage getMessage(byte flags) {
+		message.setFlags(flags); 
+		return message;
 	}
-	
-	//public byte getM
-
 }

@@ -63,4 +63,7 @@ public class ModeMessageWrapper extends DSMessageWrapper{
 	public void setMode(Mode mode) {
 		message.getPayload()[0] = mode.getByte();
 	}
+	
+	// Flags
+	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
 }

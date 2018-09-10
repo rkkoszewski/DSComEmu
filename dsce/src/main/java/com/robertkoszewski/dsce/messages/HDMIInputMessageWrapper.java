@@ -23,47 +23,45 @@
 package com.robertkoszewski.dsce.messages;
 
 /**
- * Brightness Message
+ * HDMI Input Message
  * @author Robert Koszewski
  */
-public class BrightnessMessageWrapper extends DSMessageWrapper{
+public class HDMIInputMessageWrapper extends DSMessageWrapper{
 
 	// Constructor
 	
-	public BrightnessMessageWrapper(byte group) {
-		// Create Empty Current State Message
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_BRIGHTNESS, DSMessage.COMMAND_LOWER_BRIGHTNESS, new byte[1]));
+	public HDMIInputMessageWrapper(byte group) {
+		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_HDMI_INPUT, DSMessage.COMMAND_LOWER_HDMI_INPUT, new byte[1]));
 	}
 	
-	public BrightnessMessageWrapper(byte group, int brightness) {
+	public HDMIInputMessageWrapper(byte group, byte hdmiInput) {
 		this(group);
-		setBrightness(brightness);
+		setHDMIInput(hdmiInput);
 	}
 	
-	public BrightnessMessageWrapper(DSMessage message) {
+	public HDMIInputMessageWrapper(DSMessage message) {
 		super(message);
 	}
 
 	// Methods
 	
 	/**
-	 * Get Mode
+	 * Get Ambient Mode
 	 * @return
 	 */
-	public int getBrightness() {
+	public byte getHDMIInput() {
 		return message.getPayload()[0];
 	}
 
 	/**
-	 * Set Mode
+	 * Set Ambient Mode
 	 * @param mode
 	 */
-	public void setBrightness(int brightness) {
-		brightness = Math.max(0, Math.min(100, brightness));
-		message.getPayload()[0] = (byte) (brightness & 0xFF);
+	public void setHDMIInput(byte hdmiInput) {
+		message.getPayload()[0] = hdmiInput;
 	}
 	
-	// Flags
+	// Flags	
 	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
 	
 }

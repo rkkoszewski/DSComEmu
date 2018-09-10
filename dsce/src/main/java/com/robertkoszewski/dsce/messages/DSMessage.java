@@ -238,45 +238,7 @@ public class DSMessage {
 	 */
 	public Command getCommand() {
 		if(command == null) {
-			// Parse Command
-			command = Command.UNKNOWN;
-			switch(this.command_upper) {
-			
-			case 0x01: // Discovery?
-				switch(this.command_lower) {
-					case COMMAND_LOWER_CURRENT_STATE:
-						if(payload == null || payload.length == 0)
-							command = Command.CURRENT_STATE_REQUEST;
-						else
-							command = Command.CURRENT_STATE;
-						break;
-				}
-				break;
-				
-			case 0x03: // Device Commands?
-				switch(this.command_lower) {
-					case COMMAND_LOWER_MODE:
-						command = Command.MODE;
-						break;
-					case COMMAND_LOWER_BRIGHTNESS:
-						command = Command.BRIGHTNESS;
-						break;
-					case COMMAND_LOWER_AMBIENT_COLOR:
-						command = Command.AMBIENT_COLOR;
-						break;
-					case COMMAND_LOWER_AMBIENT_MODE_TYPE:
-						command = Command.AMBIENT_MODE_TYPE;
-						break;
-					case COMMAND_LOWER_AMBIENT_SCENE:
-						command = Command.AMBIENT_SCENE;
-						break;
-					case COMMAND_LOWER_HDMI_INPUT:
-						command = Command.HDMI_INPUT;
-						break;
-				}
-				
-				break;
-			}
+			command = Command.valueOf(command_upper, command_lower, payload);
 		}
 		
 		return command;
@@ -315,13 +277,27 @@ public class DSMessage {
 	public static final byte[] MESSAGE_READ_CURRENT_STATE = new byte[]{(byte) 0xFC, 0x05, (byte) 0xFF, 0x30, 0x01, 0x0A, 0x2A};
 	
 	// Flags
-	public static final byte FLAG_BROADCAST_TO_GROUP = 0b00100001;
-	public static final byte FLAG_BROADCAST_TO_ALL = 0b00010001;
-	
+	public static final byte FLAG_BROADCAST_TO_GROUP = 0x41; // 0b00100001
+	public static final byte FLAG_BROADCAST_TO_ALL = 0x21; // 0b00010001
+	public static final byte FLAG_UNICAST = 0x11;
+	public static final byte FLAG_STATUS = 0x60; // Information related or broadcast?
+
 	// Current State
 	public static final byte COMMAND_UPPER_CURRENT_STATE = 0x01;
 	public static final byte COMMAND_LOWER_CURRENT_STATE = 0x0A;
 	
+	// Group Number
+	public static final byte COMMAND_UPPER_GROUP_NUMBER = 0x01;
+	public static final byte COMMAND_LOWER_GROUP_NUMBER = 0x09;
+	
+	// Group Name
+	public static final byte COMMAND_UPPER_GROUP_NAME = 0x01;
+	public static final byte COMMAND_LOWER_GROUP_NAME = 0x08;
+	
+	// Change Device Name
+	public static final byte COMMAND_UPPER_DEVICE_NAME = 0x01;
+	public static final byte COMMAND_LOWER_DEVICE_NAME = 0x07;
+
 	// Mode
 	public static final byte COMMAND_UPPER_MODE = 0x03;
 	public static final byte COMMAND_LOWER_MODE = 0x01;
@@ -338,9 +314,9 @@ public class DSMessage {
 	public static final byte COMMAND_UPPER_AMBIENT_COLOR = 0x03;
 	public static final byte COMMAND_LOWER_AMBIENT_COLOR = 0x05;
 
-	// Ambient Mode Type
-	public static final byte COMMAND_UPPER_AMBIENT_MODE_TYPE = 0x03;
-	public static final byte COMMAND_LOWER_AMBIENT_MODE_TYPE = 0x08;
+	// Ambient Mode
+	public static final byte COMMAND_UPPER_AMBIENT_MODE = 0x03;
+	public static final byte COMMAND_LOWER_AMBIENT_MODE = 0x08;
 	public static final byte AMBIENT_MODE_TYPE_RGB_COLOR_PAYLOAD = 0x00;
 	public static final byte AMBIENT_MODE_TYPE_SCENE_PAYLOAD = 0x01;
 	
@@ -364,10 +340,25 @@ public class DSMessage {
 	public static final byte HDMI_INPUT_CHANNEL_2_PAYLOAD = 0x01;
 	public static final byte HDMI_INPUT_CHANNEL_3_PAYLOAD = 0x02;
 	
-	// Change Device Name
-	public static final byte COMMAND_UPPER_DEVICE_NAME = 0x01;
-	public static final byte COMMAND_LOWER_DEVICE_NAME = 0x07;
+	// HDMI Active Channel
+	public static final byte COMMAND_UPPER_HDMI_ACTIVE_CHANNELS = 0x03;
+	public static final byte COMMAND_LOWER_HDMI_ACTIVE_CHANNELS = 0x2C;
 	
+	// HDMI Name
+	public static final byte COMMAND_UPPER_HDMI_NAME = 0x03;
+	public static final byte COMMAND_LOWER_HDMI_NAME_1 = 0x23;
+	public static final byte COMMAND_LOWER_HDMI_NAME_2 = 0x24;
+	public static final byte COMMAND_LOWER_HDMI_NAME_3 = 0x25;
+	
+	// SideKick Sector Setting
+	public static final byte COMMAND_UPPER_SECTOR_SETTING = 0x03;
+	public static final byte COMMAND_LOWER_SECTOR_SETTING = 0x17;
+	
+	// TODO: UNKNOWN DreamScreen Ping or Request to a SideKick
+	public static final byte COMMAND_UPPER_UNKNOWN_DS_PING = 0x01;
+	public static final byte COMMAND_LOWER_UNKNOWN_DS_PING = 0x0C;
+	
+
 	// Enums
 	
 	/**
@@ -375,15 +366,76 @@ public class DSMessage {
 	 * @author Robert Koszewski
 	 */
 	public static enum Command {
+		CURRENT_STATE_REQUEST,
+		GROUP_NUMBER,
+		GROUP_NAME,
+		DEVICE_NAME,
 		MODE,
 		BRIGHTNESS,
 		AMBIENT_COLOR,
-		AMBIENT_MODE_COLOR,
-		AMBIENT_MODE_TYPE,
+		AMBIENT_MODE,
 		AMBIENT_SCENE,
+		HDMI_ACTIVE_CHANNELS,
+		HDMI_INPUT_STATUS,
 		HDMI_INPUT,
+		HDMI_NAME_1,
+		HDMI_NAME_2,
+		HDMI_NAME_3,
+		SECTOR_SETTING,
 		CURRENT_STATE,
-		CURRENT_STATE_REQUEST,
-		UNKNOWN
+		
+		UNKNOWN_DS_PING,
+		UNKNOWN;
+		
+		/**
+		 * Parse Command
+		 * @param command_upper
+		 * @param command_lower
+		 * @param payload
+		 * @return
+		 */
+		public static Command valueOf(byte command_upper, byte command_lower, byte[] payload) {
+			
+			// Parse Command
+			switch(command_upper) {
+			
+			case 0x01: // Discovery and Management
+				switch(command_lower) {
+					case COMMAND_LOWER_CURRENT_STATE:
+						if(payload == null || payload.length == 0)
+							return Command.CURRENT_STATE_REQUEST;
+						else
+							return Command.CURRENT_STATE;
+					case COMMAND_LOWER_GROUP_NAME: return Command.GROUP_NAME;
+					case COMMAND_LOWER_GROUP_NUMBER: return Command.GROUP_NUMBER;
+					case COMMAND_LOWER_DEVICE_NAME: return Command.DEVICE_NAME;
+					case COMMAND_LOWER_UNKNOWN_DS_PING: return Command.UNKNOWN_DS_PING;
+				}
+				break;
+				
+			case 0x03: // Device Commands
+				switch(command_lower) {
+					case COMMAND_LOWER_MODE: return Command.MODE;
+					case COMMAND_LOWER_BRIGHTNESS: return Command.BRIGHTNESS;
+					case COMMAND_LOWER_AMBIENT_COLOR: return Command.AMBIENT_COLOR;
+					case COMMAND_LOWER_AMBIENT_MODE: return Command.AMBIENT_MODE;
+					case COMMAND_LOWER_AMBIENT_SCENE: return Command.AMBIENT_SCENE;
+					case COMMAND_LOWER_HDMI_INPUT: 
+						if(payload == null || payload.length == 0)
+							return Command.HDMI_INPUT_STATUS;
+						else
+							return Command.HDMI_INPUT;
+					case COMMAND_LOWER_SECTOR_SETTING: return Command.SECTOR_SETTING;
+					case COMMAND_LOWER_HDMI_NAME_1: return Command.HDMI_NAME_1;
+					case COMMAND_LOWER_HDMI_NAME_2: return Command.HDMI_NAME_2;
+					case COMMAND_LOWER_HDMI_NAME_3: return Command.HDMI_NAME_3;
+					case COMMAND_LOWER_HDMI_ACTIVE_CHANNELS: return Command.HDMI_ACTIVE_CHANNELS;
+				}
+				
+				break;
+			}
+			
+			return Command.UNKNOWN;
+		}
 	}
 }

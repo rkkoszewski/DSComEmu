@@ -20,50 +20,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *******************************************************************************/
-package com.robertkoszewski.dsce.messages;
+package com.robertkoszewski.dsce.client.features;
 
-/**
- * Brightness Message
- * @author Robert Koszewski
- */
-public class BrightnessMessageWrapper extends DSMessageWrapper{
+public class HDMIActiveChannels {
 
-	// Constructor
-	
-	public BrightnessMessageWrapper(byte group) {
-		// Create Empty Current State Message
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_BRIGHTNESS, DSMessage.COMMAND_LOWER_BRIGHTNESS, new byte[1]));
+	public HDMIActiveChannels(Active activeChannel, Status hdmi1Status, Status hdmi2Status, Status hdmi3Status) {
+		// TODO: To be continued. 
+		// Bits 2 to 0 Indicate HDMI
+		// Inputs 3 to 1 (0 - HDMI
+		// Not Valid. 1 - HDMI Valid)
 	}
 	
-	public BrightnessMessageWrapper(byte group, int brightness) {
-		this(group);
-		setBrightness(brightness);
+	// Variables
+	
+	private Active activeChannel;
+	private Status hdmi0Status;
+	private Status hdmi1Status;
+	private Status hdmi2Status;
+	
+	public enum Status{
+		VALID,
+		INVALID
 	}
 	
-	public BrightnessMessageWrapper(DSMessage message) {
-		super(message);
+	public enum Active{
+		HDMI1,
+		HDMI2,
+		HDMI3
 	}
-
-	// Methods
-	
-	/**
-	 * Get Mode
-	 * @return
-	 */
-	public int getBrightness() {
-		return message.getPayload()[0];
-	}
-
-	/**
-	 * Set Mode
-	 * @param mode
-	 */
-	public void setBrightness(int brightness) {
-		brightness = Math.max(0, Math.min(100, brightness));
-		message.getPayload()[0] = (byte) (brightness & 0xFF);
-	}
-	
-	// Flags
-	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
-	
 }

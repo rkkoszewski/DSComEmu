@@ -23,47 +23,44 @@
 package com.robertkoszewski.dsce.messages;
 
 /**
- * Brightness Message
+ * Sector Settings Message
  * @author Robert Koszewski
  */
-public class BrightnessMessageWrapper extends DSMessageWrapper{
+public class SectorSettingsMessageWrapper extends DSMessageWrapper{
 
 	// Constructor
 	
-	public BrightnessMessageWrapper(byte group) {
-		// Create Empty Current State Message
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_BRIGHTNESS, DSMessage.COMMAND_LOWER_BRIGHTNESS, new byte[1]));
+	public SectorSettingsMessageWrapper(byte group) {
+		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_SECTOR_SETTING, DSMessage.COMMAND_LOWER_SECTOR_SETTING, new byte[30]));
 	}
 	
-	public BrightnessMessageWrapper(byte group, int brightness) {
+	public SectorSettingsMessageWrapper(byte group, byte[] sectorSettings) {
 		this(group);
-		setBrightness(brightness);
+		setSectorSettings(sectorSettings);
 	}
 	
-	public BrightnessMessageWrapper(DSMessage message) {
+	public SectorSettingsMessageWrapper(DSMessage message) {
 		super(message);
 	}
 
 	// Methods
 	
 	/**
-	 * Get Mode
+	 * Get Device Name
 	 * @return
 	 */
-	public int getBrightness() {
-		return message.getPayload()[0];
+	public byte[] getSectorSettings() {
+		return message.getPayload();
 	}
 
 	/**
-	 * Set Mode
+	 * Set Device Name
 	 * @param mode
 	 */
-	public void setBrightness(int brightness) {
-		brightness = Math.max(0, Math.min(100, brightness));
-		message.getPayload()[0] = (byte) (brightness & 0xFF);
+	public void setSectorSettings(byte[] sectorSettings) {
+		message.setPayload(sectorSettings);		
 	}
 	
 	// Flags
-	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
-	
+	// public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST; // ??
 }

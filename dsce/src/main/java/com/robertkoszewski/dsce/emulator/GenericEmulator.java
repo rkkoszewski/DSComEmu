@@ -29,10 +29,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
+import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.messages.AmbientColorMessageWrapper;
+import com.robertkoszewski.dsce.messages.AmbientModeMessageWrapper;
+import com.robertkoszewski.dsce.messages.AmbientSceneMessageWrapper;
+import com.robertkoszewski.dsce.messages.BrightnessMessageWrapper;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
+import com.robertkoszewski.dsce.messages.DeviceNameMessageWrapper;
+import com.robertkoszewski.dsce.messages.GroupNameMessageWrapper;
+import com.robertkoszewski.dsce.messages.ModeMessageWrapper;
+import com.robertkoszewski.dsce.messages.GroupNumberMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
 
 /**
@@ -56,45 +67,84 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		this.socket = socket;
 		final GenericEmulator emulator = this;
 		
-		// Respond to Current State Request
+		// Responses
 		callbacks.add(new MessageReceived() {
 			@Override
 			public void run(DSMessage message, InetAddress senderIP, int senderPort) {
-				// System.out.println("MESSAGE RECEIVED: (" +  message.getCommand().name() + ") 0x" + StringUtils.bytesToHex(message.getMessage()));
-				if(DSMessage.Command.CURRENT_STATE_REQUEST == message.getCommand()) {
-					try {
-						System.out.println("EMULATOR: Responding to State Request");
-						//System.out.println("SENDING: " + StringUtils.bytesToHex(emulator.getCurrentStateResponse().getMessage().getMessage()));
-						socket.sendMessage(senderIP, emulator.getCurrentStateResponse().getMessage());
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+				// Discard message targeted to other group
+				byte targetGroup = message.getGroupAddress();
+				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
+					System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
+					return;
+				}
+				
+				// Supported Commands
+				switch(message.getCommand()) {
+				case CURRENT_STATE_REQUEST: // Current State Request
+					sendMessage(senderIP, emulator.getCurrentStateResponse().getMessage(CurrentStateMessageWrapper.FLAG_STATUS));
+					break;
+					
+				case GROUP_NAME: // Set Group Name
+					setGroupName(new GroupNameMessageWrapper(message).getGroupName());
+					break;
+					
+				case GROUP_NUMBER: // Set Group Number
+					setGroupNumber(new GroupNumberMessageWrapper(message).getGroupNumber());
+					break;
+					
+				case DEVICE_NAME: // Set Device Name
+					setName(new DeviceNameMessageWrapper(message).getDeviceName());
+					break;
+				
+				case AMBIENT_COLOR: // Set Ambient Color
+					setAmbientColor(new AmbientColorMessageWrapper(message).getAmbientColor(), 
+							message.getFlags() == AmbientColorMessageWrapper.FLAG_UNICAST_GROUP ? true : false);
+					break;
+
+				case AMBIENT_MODE: // Set Ambient Mode Type
+					setAmbientMode(new AmbientModeMessageWrapper(message).getAmbientMode());
+					break;
+					
+				case AMBIENT_SCENE: // Set Ambient Scene
+					setAmbientScene(new AmbientSceneMessageWrapper(message).getAmbientScene());
+					break;
+					
+				case BRIGHTNESS: // Set Brightness
+					setBrightness(new BrightnessMessageWrapper(message).getBrightness());
+					break;
+
+				case MODE: // Set Device Mode
+					setMode(new ModeMessageWrapper(message).getMode()); 
+					break;
+					
+				// Ignore any other commands
+				default: break; 
 				}
 			}
 		});
 		
 		// Default Settings
-		name = "unassigned";
-		groupName = "unassigned";
+		name = "DSEmulator";
+		groupName = "undefined";
 		groupNumber = 0;
-		mode = DSMessage.MODE_MUSIC_PAYLOAD;
-		brightness = 0;
+		mode = Mode.SLEEP;
+		brightness = 100;
 		ambientColor = new Color(0,0,0);
-		ambientScene = DSMessage.AMBIENT_SCENE_FIRESIDE_PAYLOAD;
+		ambientScene = AmbientScene.FIRESIDE;
 	}
 	
 	// Device Status
 	protected String name;
 	protected String groupName;
 	protected byte groupNumber;
-	protected byte mode;
+	protected Mode mode;
 	protected byte brightness;
 	protected Color ambientColor; 
-	protected byte ambientScene;
+	protected AmbientScene ambientScene;
 	
 	protected final SocketListener socket;
 	private boolean running = false;
-	private ArrayList<MessageReceived> callbacks = new ArrayList<MessageReceived>();
+	protected ArrayList<MessageReceived> callbacks = new ArrayList<MessageReceived>();
 	
 	/**
 	 * Start Device Emulation
@@ -108,7 +158,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	}
 	
 	/**
-	 * Stop Devie Emulation
+	 * Stop Device Emulation
 	 */
 	public void stop() { // TODO: Make thread safe
 		if(!running) return; // Abort if already stopped
@@ -116,6 +166,14 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		while(it.hasNext())
 			socket.removeCallback(it.next());
 		running = false;	
+	}
+	
+	/**
+	 * Is Device Running?
+	 * @return
+	 */
+	protected boolean isRunning() {
+		return running;
 	}
 
 	// Messages
@@ -136,10 +194,9 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		message.setDevice(getDeviceType());
 		
 		// Message Details
-		DSMessage llmessage = message.getMessage();
+		DSMessage llmessage = message.getMessage((byte) 0x60);
 		llmessage.setGroupAddress((byte) 0xFF);
-		llmessage.setFlags((byte) 0x60);
-		
+
 		return message;
 	}
 	
@@ -197,7 +254,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Get Mode
 	 * @return
 	 */
-	public byte getMode() {
+	public Mode getMode() {
 		return this.mode;
 	}
 
@@ -205,7 +262,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set Mode
 	 * @param groupNumber
 	 */
-	public void setMode(byte mode) {
+	public void setMode(Mode mode) {
 		this.mode = mode;
 	}
 	
@@ -213,7 +270,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Get Brightness
 	 * @return
 	 */
-	public byte getBrightness() {
+	public int getBrightness() {
 		return this.brightness;
 	}
 
@@ -221,8 +278,19 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set Mode
 	 * @param groupNumber
 	 */
-	public void setBrightness(byte brightness) {
-		this.brightness = brightness;
+	public void setBrightness(int brightness) {
+		if(brightness > 100 || brightness < 0) 
+			throw new NumberFormatException("Value can only be between 0 and 100");
+		this.brightness = (byte) (brightness & 0xFF);
+		System.out.println("CHANGING BRIGHTNESS TO: " + brightness);
+	}
+	
+	/**
+	 * Set Ambient Mode
+	 * @param ambientMode
+	 */
+	public void setAmbientMode(AmbientMode ambientMode) {
+		// { Implementation Dependent }
 	}
 	
 	/**
@@ -237,7 +305,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set  Ambient Color
 	 * @param groupNumber
 	 */
-	public void setAmbientColor(Color color) {
+	public void setAmbientColor(Color color, boolean broadcastToGroup) {
 		this.ambientColor = color;
 	}
 	
@@ -245,7 +313,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set  Ambient Color
 	 * @param groupNumber
 	 */
-	public void setAmbientColor(byte r, byte g, byte b) {
+	public void setAmbientColor(byte r, byte g, byte b, boolean broadcastToGroup) {
 		this.ambientColor = new Color(r, g, b);
 	}
 
@@ -253,7 +321,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set Ambient Scene
 	 * @return
 	 */
-	public byte getAmbientScene() {
+	public AmbientScene getAmbientScene() {
 		return this.ambientScene;
 	}
 	
@@ -261,8 +329,8 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set Ambient Scene
 	 * @param groupNumber
 	 */
-	public void setAmbientScene(byte ambientSceneID) {
-		this.ambientScene = ambientSceneID;
+	public void setAmbientScene(AmbientScene ambientScene) {
+		this.ambientScene = ambientScene;
 	}
 	
 	// Utility Functions
@@ -273,11 +341,26 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void replicate(DSDevice device) {
 		this.name = device.getName();
-		this.ambientScene = device.getAmbientScene().getByte();
+		this.ambientScene = device.getAmbientScene();
 		this.brightness = (byte) device.getBrightness();
 		this.groupName = device.getGroupName();
 		this.groupNumber = device.getGroupNumber();
-		this.mode = device.getMode().getByte();
+		this.mode = device.getMode();
 		this.ambientColor = device.getAmbientColor();
+	}
+	
+	// Helpers
+	
+	/**
+	 * Send Message
+	 * @param senderIP
+	 * @param dsMessage
+	 */
+	private void sendMessage(InetAddress senderIP, DSMessage dsMessage) {
+		try {
+			socket.sendMessage(senderIP, dsMessage);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -22,12 +22,17 @@
  *******************************************************************************/
 package com.robertkoszewski.dsce.emulator;
 
+import java.net.InetAddress;
+
 import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DreamScreenHD;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
+import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
+import com.robertkoszewski.dsce.messages.HDMIInputMessageWrapper;
+import com.robertkoszewski.dsce.messages.HDMINameMessageWrapper;
 
 /**
  * DreamScreen HD Emulator
@@ -46,7 +51,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * Initialize DreamScreen HD Emulator with Socket
 	 * @param socket
 	 */
-	public DreamScreenHDEmulator(SocketListener socket) {
+	public DreamScreenHDEmulator(final SocketListener socket) {
 		super(socket);
 		
 		// Defaults
@@ -55,6 +60,46 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 		inputName2 = "unassigned";
 		inputName3 = "unassigned";
 		hdmiActiveChannels = 1;
+
+		// Responses
+		callbacks.add(new MessageReceived() {
+			@Override
+			public void run(DSMessage message, InetAddress senderIP, int senderPort) {
+				// Discard message targeted to other group
+				byte targetGroup = message.getGroupAddress();
+				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
+					return;
+				}
+				
+				// Supported Commands
+				switch(message.getCommand()) {
+				case HDMI_ACTIVE_CHANNELS: // Get List of Active HDMI Channels
+					break;
+				
+				case HDMI_INPUT_STATUS: // Probably means restore to previous state
+					break;
+				
+				case HDMI_INPUT: // Set HDMI Input
+					setHDMIInput(new HDMIInputMessageWrapper(message).getHDMIInput() & 0xFF);
+					break;
+					
+				case HDMI_NAME_1: // Set HDMI 1 Input Name
+					setHDMIInput1Name(new HDMINameMessageWrapper(message).getInputName());
+					break;
+					
+				case HDMI_NAME_2: // Set HDMI 2 Input Name
+					setHDMIInput2Name(new HDMINameMessageWrapper(message).getInputName());
+					break;
+					
+				case HDMI_NAME_3: // Set HDMI 3 Input Name
+					setHDMIInput3Name(new HDMINameMessageWrapper(message).getInputName());
+					break;
+
+				// Ignore any other commands
+				default: break; 
+				}
+			}
+		});
 	}
 
 	// Variables
@@ -90,9 +135,8 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 		message.setDevice(getDeviceType());
 		
 		// Message Details
-		DSMessage llmessage = message.getMessage();
+		DSMessage llmessage = message.getMessage((byte) 0x60);
 		llmessage.setGroupAddress((byte) 0xFF);
-		llmessage.setFlags((byte) 0x60);
 		
 		return message;
 	}
@@ -103,16 +147,18 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * Get HDMI Input
 	 * @return
 	 */
-	public byte getHDMIInput() {
-		return hdmiInput;
+	public int getHDMIInput() {
+		return (hdmiInput & 0xFF) + 1;
 	}
 	
 	/**
 	 * Set HDMI Input
 	 * @param hdmiInput
 	 */
-	public void setHDMIInput(byte hdmiInput) {
-		this.hdmiInput = hdmiInput;
+	public void setHDMIInput(int hdmiInput) {
+		if(hdmiInput < 1) hdmiInput = 1;
+		else if(hdmiInput > 3) hdmiInput = 3;
+		this.hdmiInput = (byte) ((hdmiInput - 1) & 0xFF);
 	}
 	
 	/**

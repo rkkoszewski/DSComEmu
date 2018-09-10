@@ -36,6 +36,7 @@ import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.DeviceNameMessageWrapper;
 import com.robertkoszewski.dsce.messages.InvalidMessageException;
 import com.robertkoszewski.dsce.messages.ModeMessageWrapper;
+import com.robertkoszewski.dsce.messages.GroupNumberMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
 
 /**
@@ -109,14 +110,14 @@ public abstract class DSDevice implements IDSDevice{
 	private InetAddress ip;
 	private String name;
 	private String groupName;
-	private byte groupNumber;
+	protected byte groupNumber;
 	private byte mode;
 	private byte brightness;
 	private Color ambientColor;
 	private byte ambientScene;
 	
 	// Socket
-	private SocketListener socket;
+	protected SocketListener socket;
 	
 	// Methods
 	
@@ -157,7 +158,7 @@ public abstract class DSDevice implements IDSDevice{
 	 */
 	public void setName(String name) throws IOException {
 		this.name = name == null ? "" : name.length() > MAX_STR_LENGTH ? name.substring(0, MAX_STR_LENGTH) : name;
-		socket.sendStaticMessage(getIP(), new DeviceNameMessageWrapper(groupNumber, name).getMessage());
+		socket.sendStaticMessage(getIP(), new DeviceNameMessageWrapper(groupNumber, name).getMessage(DeviceNameMessageWrapper.FLAG_UNICAST));
 	}
 
 	/**
@@ -189,6 +190,7 @@ public abstract class DSDevice implements IDSDevice{
 	 * @param groupNumber
 	 */
 	public void setGroupNumber(byte groupNumber) throws IOException {
+		socket.sendStaticMessage(getIP(), new GroupNumberMessageWrapper(this.groupNumber, groupNumber).getMessage(GroupNumberMessageWrapper.FLAG_UNICAST));
 		this.groupNumber = groupNumber;
 	}
 	
@@ -207,7 +209,7 @@ public abstract class DSDevice implements IDSDevice{
 	 */
 	public void setMode(Mode mode) throws IOException {
 		this.mode = mode.getByte();
-		socket.sendStaticMessage(getIP(), new ModeMessageWrapper(groupNumber, mode).getMessage());
+		socket.sendStaticMessage(getIP(), new ModeMessageWrapper(groupNumber, mode).getMessage(ModeMessageWrapper.FLAG_UNICAST));
 	}
 	
 	/**
@@ -227,7 +229,7 @@ public abstract class DSDevice implements IDSDevice{
 		if(brightness > 100 || brightness < 0) 
 			throw new NumberFormatException("Value can only be between 0 and 100");
 		this.brightness = (byte) (brightness & 0xFF);
-		socket.sendStaticMessage(getIP(), new BrightnessMessageWrapper(groupNumber, brightness).getMessage());
+		socket.sendStaticMessage(getIP(), new BrightnessMessageWrapper(groupNumber, brightness).getMessage(BrightnessMessageWrapper.FLAG_UNICAST));
 	}
 	
 	/**
@@ -243,9 +245,10 @@ public abstract class DSDevice implements IDSDevice{
 	 * @param groupNumber
 	 * @throws IOException 
 	 */
-	public void setAmbientColor(Color color, boolean isFinalState) throws IOException {
+	public void setAmbientColor(Color color, boolean broadcastToGroup) throws IOException {
 		this.ambientColor = color;
-		socket.sendStaticMessage(getIP(), new AmbientColorMessageWrapper(groupNumber, isFinalState, color).getMessage());
+		socket.sendStaticMessage(getIP(), new AmbientColorMessageWrapper(groupNumber, color).getMessage(
+				broadcastToGroup ? AmbientColorMessageWrapper.FLAG_UNICAST_GROUP : AmbientColorMessageWrapper.FLAG_UNICAST_LOCAL));
 	}
 	
 	/**
@@ -253,9 +256,10 @@ public abstract class DSDevice implements IDSDevice{
 	 * @param groupNumber
 	 * @throws IOException 
 	 */
-	public void setAmbientColor(byte r, byte g, byte b, boolean isFinalState) throws IOException {
+	public void setAmbientColor(byte r, byte g, byte b, boolean broadcastToGroup) throws IOException {
 		this.ambientColor = new Color(r, g, b);
-		socket.sendStaticMessage(getIP(), new AmbientColorMessageWrapper(groupNumber, isFinalState, this.ambientColor).getMessage());
+		socket.sendStaticMessage(getIP(), new AmbientColorMessageWrapper(groupNumber, this.ambientColor).getMessage(
+				broadcastToGroup ? AmbientColorMessageWrapper.FLAG_UNICAST_GROUP : AmbientColorMessageWrapper.FLAG_UNICAST_LOCAL));
 	}
 
 	/**
@@ -273,26 +277,16 @@ public abstract class DSDevice implements IDSDevice{
 	 */
 	public void setAmbientScene(AmbientScene ambientScene) throws IOException {
 		this.ambientScene = ambientScene.getByte();
-		socket.sendStaticMessage(getIP(), new AmbientSceneMessageWrapper(groupNumber, ambientScene).getMessage());
-	}
-	
-	/**
-	 * Get Ambient Mode
-	 * @return
-	 */
-	public AmbientMode getAmbientMode() {
-		// return AmbientMode.valueOf(this.ambientMode);
-		return null; // TODO: Is it possible to know this reported by device?
+		socket.sendStaticMessage(getIP(), new AmbientSceneMessageWrapper(groupNumber, ambientScene).getMessage(AmbientSceneMessageWrapper.FLAG_UNICAST));
 	}
 
 	/**
-	 * Set Ambient Mode
+	 * Set Ambient Mode (Write Only)
 	 * @param groupNumber
 	 * @throws IOException 
 	 */
 	public void setAmbientMode(AmbientMode mode) throws IOException {
-		// this.ambientMode = mode.getByte();
-		socket.sendStaticMessage(getIP(), new AmbientModeMessageWrapper(groupNumber, mode).getMessage());
+		socket.sendStaticMessage(getIP(), new AmbientModeMessageWrapper(groupNumber, mode).getMessage(AmbientModeMessageWrapper.FLAG_UNICAST));
 	}
 
 	// Static Methods
