@@ -354,9 +354,14 @@ public class DSMessage {
 	public static final byte COMMAND_UPPER_SECTOR_SETTING = 0x03;
 	public static final byte COMMAND_LOWER_SECTOR_SETTING = 0x17;
 	
-	// TODO: UNKNOWN DreamScreen Ping or Request to a SideKick
-	public static final byte COMMAND_UPPER_UNKNOWN_DS_PING = 0x01;
-	public static final byte COMMAND_LOWER_UNKNOWN_DS_PING = 0x0C;
+	// Subscription Request
+	public static final byte COMMAND_UPPER_SUBSCRIPTION_REQUEST = 0x01;
+	public static final byte COMMAND_LOWER_SUBSCRIPTION_REQUEST = 0x0C;
+	public static final byte[] SUBSCRIPTION_REQUEST_ACK_PAYLOAD = new byte[] {0x01};
+	
+	// Screen Sector Data
+	public static final byte COMMAND_UPPER_SCREEN_SECTOR_DATA = 0x03;
+	public static final byte COMMAND_LOWER_SCREEN_SECTOR_DATA = 0x16;
 	
 
 	// Enums
@@ -383,8 +388,9 @@ public class DSMessage {
 		HDMI_NAME_3,
 		SECTOR_SETTING,
 		CURRENT_STATE,
+		SUBSCRIPTION_REQUEST,
+		SCREEN_SECTOR_DATA,
 		
-		UNKNOWN_DS_PING,
 		UNKNOWN;
 		
 		/**
@@ -409,7 +415,7 @@ public class DSMessage {
 					case COMMAND_LOWER_GROUP_NAME: return Command.GROUP_NAME;
 					case COMMAND_LOWER_GROUP_NUMBER: return Command.GROUP_NUMBER;
 					case COMMAND_LOWER_DEVICE_NAME: return Command.DEVICE_NAME;
-					case COMMAND_LOWER_UNKNOWN_DS_PING: return Command.UNKNOWN_DS_PING;
+					case COMMAND_LOWER_SUBSCRIPTION_REQUEST: return Command.SUBSCRIPTION_REQUEST;
 				}
 				break;
 				
@@ -430,6 +436,7 @@ public class DSMessage {
 					case COMMAND_LOWER_HDMI_NAME_2: return Command.HDMI_NAME_2;
 					case COMMAND_LOWER_HDMI_NAME_3: return Command.HDMI_NAME_3;
 					case COMMAND_LOWER_HDMI_ACTIVE_CHANNELS: return Command.HDMI_ACTIVE_CHANNELS;
+					case COMMAND_LOWER_SCREEN_SECTOR_DATA: return Command.SCREEN_SECTOR_DATA;
 				}
 				
 				break;

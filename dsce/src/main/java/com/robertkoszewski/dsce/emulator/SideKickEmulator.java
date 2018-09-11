@@ -22,11 +22,13 @@
  *******************************************************************************/
 package com.robertkoszewski.dsce.emulator;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.net.InetAddress;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
+import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.messages.DSMessage;
@@ -52,7 +54,7 @@ public class SideKickEmulator extends GenericEmulator {
 				// Discard message targeted to other group
 				byte targetGroup = message.getGroupAddress();
 				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
-					System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
+					// System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
 					return;
 				}
 				
@@ -62,28 +64,14 @@ public class SideKickEmulator extends GenericEmulator {
 					sectorSettings = new SectorSettingsMessageWrapper(message).getSectorSettings();
 					break;
 					
-				case UNKNOWN_DS_PING:
-					// TODO: Find out what this message means. A DreamScreen device sends this out to a SideKick in a Group. Is probably eider a ping or a request to know the sector settings of the device.
+				case SUBSCRIPTION_REQUEST: // Subscription Request
+					message.setPayload(DSMessage.SUBSCRIPTION_REQUEST_ACK_PAYLOAD); // Acknowledge Subscription
+					sendMessage(senderIP, message);
+					break;
 					
-					System.out.println("Sending Test Message");
-					DSMessage test_message = new DSMessage(getGroupNumber(), 
-							(byte) 0x30, // Flags
-							DSMessage.COMMAND_UPPER_SECTOR_SETTING, // Command Upper
-							DSMessage.COMMAND_LOWER_SECTOR_SETTING, // Command Lower
-							sectorSettings); // Payload
-					
-					/*
-					DSMessage test_message = new DSMessage(getGroupNumber(), 
-							(byte) 0x33, // Flags
-							DSMessage.COMMAND_UPPER_UNKNOWN_DS_PING, // Command Upper
-							DSMessage.COMMAND_LOWER_UNKNOWN_DS_PING); // Command Lower
-					*/
-
-					try {
-						socket.sendStaticMessage(senderIP, test_message.getMessage());
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+				case SCREEN_SECTOR_DATA:
+					ScreenColor scolor = new ScreenColor(message.getPayload());
+					setColor(scolor.getColor(8));
 					break;
 
 				// Ignore any other commands
@@ -96,7 +84,19 @@ public class SideKickEmulator extends GenericEmulator {
 	// Variables
 	private byte[] sectorSettings = new byte[30];
 	
+	// Methods - Overrides
+	
+	@Override
+	public void setAmbientColor(Color color, boolean broadcastToGroup) {
+		super.setAmbientColor(color, broadcastToGroup);
+		setColor(color);
+	}
+	
 	// Methods
+	
+	public void setColor(Color color) {
+		// Method to be overriden
+	}
 	
 	// TODO: Research how Sector Settings are working (How to parse and generate data)
 

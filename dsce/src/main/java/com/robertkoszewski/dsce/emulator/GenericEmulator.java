@@ -74,7 +74,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 				// Discard message targeted to other group
 				byte targetGroup = message.getGroupAddress();
 				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
-					System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
+					// System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
 					return;
 				}
 				
@@ -356,7 +356,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * @param senderIP
 	 * @param dsMessage
 	 */
-	private void sendMessage(InetAddress senderIP, DSMessage dsMessage) {
+	protected void sendMessage(InetAddress senderIP, DSMessage dsMessage) {
 		try {
 			socket.sendMessage(senderIP, dsMessage);
 		} catch (IOException e) {

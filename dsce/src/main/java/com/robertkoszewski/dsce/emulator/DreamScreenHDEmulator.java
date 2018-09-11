@@ -74,9 +74,11 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 				// Supported Commands
 				switch(message.getCommand()) {
 				case HDMI_ACTIVE_CHANNELS: // Get List of Active HDMI Channels
+					// TODO: Implement this
 					break;
 				
 				case HDMI_INPUT_STATUS: // Probably means restore to previous state
+					// TODO: Implement this
 					break;
 				
 				case HDMI_INPUT: // Set HDMI Input

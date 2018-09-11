@@ -24,6 +24,7 @@ package com.robertkoszewski.dsce.emulator.variant;
 
 import java.awt.Color;
 import java.awt.Dimension;
+
 import javax.swing.JFrame;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
@@ -75,11 +76,10 @@ public class SwingSideKickEmulator extends SideKickEmulator {
 		}
 		super.stop();
 	}
-	
+
 	@Override
-	public void setAmbientColor(Color color, boolean broadcastToGroup) {
+	public void setColor(Color color) {
 		frame.getContentPane().setBackground(color); // Update GUI Color
-		super.setAmbientColor(color, broadcastToGroup);
 	}
 	
 	@Override
