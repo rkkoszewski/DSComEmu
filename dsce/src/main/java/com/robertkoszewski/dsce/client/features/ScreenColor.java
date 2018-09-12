@@ -35,7 +35,12 @@ public class ScreenColor {
 	}
 	
 	public ScreenColor(byte[] sectors) {
-		this.sectors = sectors;
+		if(sectors.length != 36) {
+			System.err.println("ERROR: Expected 36 bytes of sector data but got " + sectors.length);
+			this.sectors = new byte[36];
+		}else {
+			this.sectors = sectors;
+		}
 	}
 
 	// Variables
@@ -58,9 +63,10 @@ public class ScreenColor {
 	 * @param color
 	 */
 	public void setColor(int sector, Color color) {
-		sectors[sector-1] = (byte) (color.getRed()   & 0xFF);
-		sectors[sector]   = (byte) (color.getGreen() & 0xFF);
-		sectors[sector+1] = (byte) (color.getBlue()  & 0xFF);
+		int isector = sector * 3;
+		this.sectors[--isector] = (byte) (color.getBlue()  & 0xFF);
+		this.sectors[--isector] = (byte) (color.getGreen() & 0xFF);
+		this.sectors[--isector] = (byte) (color.getRed()   & 0xFF);
 	}
 	
 	/**
@@ -68,18 +74,20 @@ public class ScreenColor {
 	 * @param sectors
 	 * @return
 	 */
-	public Color getAverageColor(int... sectors) {
+	public Color getAverageColor(int... isectors) {
 		// UNCHECKED: Valid sectors are 1 to 12 and it should not surpass the length of 12 of the array
+		if(isectors.length == 0) return Color.BLACK;
 		
 		int r = 0, g = 0, b = 0;
 	
-		for(int sector : sectors) {
-			r += sectors[sector-1] & 0xFF;
-			g += sectors[sector] & 0xFF;
-			b += sectors[sector+1] & 0xFF;
+		for(int sector : isectors) {
+			int isector = sector * 3;
+			b += this.sectors[--isector] & 0xFF;
+			g += this.sectors[--isector] & 0xFF;
+			r += this.sectors[--isector] & 0xFF;
 		}
 		
-		return new Color(r/sectors.length, g/sectors.length, b/sectors.length);
+		return new Color(r/isectors.length, g/isectors.length, b/isectors.length);
 	}
 
 	/**
@@ -87,6 +95,6 @@ public class ScreenColor {
 	 * @return
 	 */
 	public byte[] getPayload() {
-		return sectors;
+		return this.sectors;
 	}
 }

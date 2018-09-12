@@ -121,7 +121,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	
 	@Override
 	protected CurrentStateMessageWrapper getCurrentStateResponse() {
-		CurrentStateMessageWrapper message = new CurrentStateMessageWrapper(CurrentStateMessageWrapper.DREAMSCREEN_PAYLOAD_SIZE);
+		CurrentStateMessageWrapper message = new CurrentStateMessageWrapper(getDeviceType());
 		message.setName(name);
 		message.setGroupNumber(groupNumber);
 		message.setGroupName(groupName);
@@ -134,7 +134,6 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 		message.setHDMIInput2Name(inputName2);
 		message.setHDMIInput3Name(inputName3);
 		message.setActiveChannels(hdmiActiveChannels);
-		message.setDevice(getDeviceType());
 		
 		// Message Details
 		DSMessage llmessage = message.getMessage((byte) 0x60);

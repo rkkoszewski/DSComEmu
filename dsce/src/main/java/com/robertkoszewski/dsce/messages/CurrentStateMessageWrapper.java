@@ -39,15 +39,25 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 
 	// Constructor
 	
-	public CurrentStateMessageWrapper(int payload_length) {
+	public CurrentStateMessageWrapper(Device deviceType) {
+		super(new DSMessage((byte)0, DSMessage.FLAG_BROADCAST_TO_ALL, DSMessage.COMMAND_UPPER_CURRENT_STATE, DSMessage.COMMAND_LOWER_CURRENT_STATE, 
+				deviceType == Device.SIDEKICK ? 
+						new byte[SIDEKICK_PAYLOAD_SIZE] : 
+							new byte[DREAMSCREEN_PAYLOAD_SIZE]));
 		// Create Empty Current State Message
-		super(new DSMessage((byte)0, DSMessage.FLAG_BROADCAST_TO_ALL, DSMessage.COMMAND_UPPER_CURRENT_STATE, DSMessage.COMMAND_LOWER_CURRENT_STATE, new byte[payload_length]));
+		this.deviceType = deviceType;
+		setDevice(deviceType);
 	}
 	
 	public CurrentStateMessageWrapper(DSMessage message) {
 		super(message);
+		this.deviceType = getDevice();
 	}
 
+	
+	// Variables
+	private final Device deviceType;
+	
 	// Methods
 	
 	/**
@@ -65,7 +75,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @param device
 	 * @throws MalformedPayloadState 
 	 */
-	public void setDevice(Device device) {
+	private void setDevice(Device device) {
 		byte[] payload = message.getPayload();
 		payload[payload.length-1] = device.getByte();
 	}
@@ -182,7 +192,12 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 */
 	public Color getAmbientColor() {
 		byte[] payload = message.getPayload();
-		return new Color(payload[40] & 0xFF, payload[41] & 0xFF, payload[42] & 0xFF);
+		if(this.deviceType == Device.SIDEKICK) {
+			return new Color(payload[35] & 0xFF, payload[36] & 0xFF, payload[37] & 0xFF);
+		}else {
+			// DreamScreen HD and 4K
+			return new Color(payload[40] & 0xFF, payload[41] & 0xFF, payload[42] & 0xFF);
+		}
 	}
 
 	/**
@@ -201,9 +216,16 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 */
 	public void setAmbientColor(byte r, byte g, byte b) {
 		byte[] payload = message.getPayload();
-		payload[40] = r;
-		payload[41] = g;
-		payload[42] = b;
+		if(this.deviceType == Device.SIDEKICK) {
+			payload[35] = r;
+			payload[36] = g;
+			payload[37] = b;
+		}else {
+			// DreamScreen HD and 4K
+			payload[40] = r;
+			payload[41] = g;
+			payload[42] = b;
+		}
 	}
 
 	/**
@@ -212,7 +234,12 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 */
 	public byte getAmbientScene() {
 		byte[] payload = message.getPayload();
-		return payload[62];
+		if(this.deviceType == Device.SIDEKICK) {
+			return payload[60];
+		}else {
+			// DreamScreen HD and 4K
+			return payload[62];
+		}
 	}
 	
 	/**
@@ -221,7 +248,12 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 */
 	public void setAmbientScene(byte ambientSceneID) {
 		byte[] payload = message.getPayload();
-		payload[62] = ambientSceneID;
+		if(this.deviceType == Device.SIDEKICK) {
+			payload[60] = ambientSceneID;
+		}else {
+			// DreamScreen HD and 4K
+			payload[62] = ambientSceneID;
+		}
 	}
 	
 	/**
@@ -237,6 +269,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @return
 	 */
 	public byte getHDMIInput() {
+		if(this.deviceType == Device.SIDEKICK) return 0;
 		byte[] payload = message.getPayload();
 		if(payload.length < 73) return 0;
 		return payload[73];
@@ -247,6 +280,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @param HDMIInput
 	 */
 	public void setHDMIInput(byte HDMIInput) {
+		if(this.deviceType == Device.SIDEKICK) return;
 		byte[] payload = message.getPayload();
 		if(payload.length < 73) return;
 		payload[73] = HDMIInput;
@@ -257,6 +291,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @return
 	 */
 	public String getHDMIInput1Name() {
+		if(this.deviceType == Device.SIDEKICK) return null;
 		byte[] payload = message.getPayload();
 		if(payload.length < 90) return "";
 		return new String(Arrays.copyOfRange(payload, 75, 90)).trim(); // 16-31 (UTF-8) - Group Name
@@ -267,6 +302,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @param name
 	 */
 	public void setHDMIInput1Name(String name) {
+		if(this.deviceType == Device.SIDEKICK) return;
 		byte[] bname = name.getBytes(Charset.forName("UTF-8"));
 		ArrayUtils.fillInArray(message.getPayload(), bname, 75, 15, (byte) 0x00);
 	}
@@ -276,6 +312,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @return
 	 */
 	public String getHDMIInput2Name() {
+		if(this.deviceType == Device.SIDEKICK) return null;
 		byte[] payload = message.getPayload();
 		if(payload.length < 106) return "";
 		return new String(Arrays.copyOfRange(payload, 91, 106)).trim(); // 16-31 (UTF-8) - Group Name
@@ -286,6 +323,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @param name
 	 */
 	public void setHDMIInput2Name(String name) {
+		if(this.deviceType == Device.SIDEKICK) return;
 		byte[] bname = name.getBytes(Charset.forName("UTF-8"));
 		ArrayUtils.fillInArray(message.getPayload(), bname, 91, 15, (byte) 0x00);
 	}
@@ -295,6 +333,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @return
 	 */
 	public String getHDMIInput3Name() {
+		if(this.deviceType == Device.SIDEKICK) return null;
 		byte[] payload = message.getPayload();
 		if(payload.length < 122) return "";
 		return new String(Arrays.copyOfRange(payload, 107, 122)).trim(); // 16-31 (UTF-8) - Group Name
@@ -305,6 +344,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @param name
 	 */
 	public void setHDMIInput3Name(String name) {
+		if(this.deviceType == Device.SIDEKICK) return;
 		byte[] bname = name.getBytes(Charset.forName("UTF-8"));
 		ArrayUtils.fillInArray(message.getPayload(), bname, 107, 15, (byte) 0x00);
 	}
@@ -314,6 +354,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @return
 	 */
 	public byte getActiveChannels() {
+		if(this.deviceType == Device.SIDEKICK) return 0;
 		byte[] payload = message.getPayload();
 		if(payload.length < 129) return 0;
 		return payload[129];
@@ -324,9 +365,25 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	 * @param activeChannels
 	 */
 	public void setActiveChannels(byte activeChannels) {
+		if(this.deviceType == Device.SIDEKICK) return;
 		byte[] payload = message.getPayload();
 		if(payload.length < 129) return;
 		payload[129] = activeChannels;
+	}
+	
+	/**
+	 * Set Active Screen Sectors
+	 * @param screenSectors
+	 */
+	public void setActiveSectors(int[] screenSectors) {
+		if(this.deviceType != Device.SIDEKICK) return;
+		byte[] sectors = new byte[15];
+		
+		for(int i = 0; i < 15 && i < screenSectors.length ; i++) {
+			sectors[i] = (byte) (screenSectors[i] & 0xFF);
+		}
+		
+		ArrayUtils.fillInArray(message.getPayload(), sectors, 42, 15, (byte) 0x00); // Found by brute force. 42 + 15 = Sector Settings
 	}
 	
 	// Static Variables

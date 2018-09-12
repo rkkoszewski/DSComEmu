@@ -23,7 +23,6 @@
 package com.robertkoszewski.dsce.emulator;
 
 import java.awt.Color;
-import java.io.IOException;
 import java.net.InetAddress;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice;
@@ -31,6 +30,7 @@ import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.SectorSettingsMessageWrapper;
 
@@ -61,7 +61,7 @@ public class SideKickEmulator extends GenericEmulator {
 				// Supported Commands
 				switch(message.getCommand()) {
 				case SECTOR_SETTING: // Set Sector Settings
-					sectorSettings = new SectorSettingsMessageWrapper(message).getSectorSettings();
+					screenSectors = new SectorSettingsMessageWrapper(message).getSectorSettings();
 					break;
 					
 				case SUBSCRIPTION_REQUEST: // Subscription Request
@@ -70,8 +70,7 @@ public class SideKickEmulator extends GenericEmulator {
 					break;
 					
 				case SCREEN_SECTOR_DATA:
-					ScreenColor scolor = new ScreenColor(message.getPayload());
-					setColor(scolor.getColor(8));
+					setScreenColors(new ScreenColor(message.getPayload()));
 					break;
 
 				// Ignore any other commands
@@ -82,7 +81,7 @@ public class SideKickEmulator extends GenericEmulator {
 	}
 	
 	// Variables
-	private byte[] sectorSettings = new byte[30];
+	private int[] screenSectors = new int[0];
 	
 	// Methods - Overrides
 	
@@ -94,11 +93,42 @@ public class SideKickEmulator extends GenericEmulator {
 	
 	// Methods
 	
+	/**
+	 * Set Screen Colors (Independent of configured screen sectors)
+	 * @param scolor
+	 */
+	public void setScreenColors(ScreenColor scolor) {
+		setColor(scolor.getAverageColor(screenSectors));
+	}
+	
+	/**
+	 * Set Color (For the final light device, applies for screen and ambient also)
+	 * @param color
+	 */
 	public void setColor(Color color) {
 		// Method to be overriden
 	}
 	
-	// TODO: Research how Sector Settings are working (How to parse and generate data)
+	/**
+	 * Current State Message
+	 */
+	protected CurrentStateMessageWrapper getCurrentStateResponse() {
+		CurrentStateMessageWrapper message = new CurrentStateMessageWrapper(getDeviceType());
+		message.setName(name);
+		message.setGroupNumber(groupNumber);
+		message.setGroupName(groupName);
+		message.setMode(mode);
+		message.setBrightness(brightness);
+		message.setAmbientColor(ambientColor);
+		message.setAmbientScene(ambientScene);
+		message.setActiveSectors(screenSectors);
+		
+		// Message Details
+		DSMessage llmessage = message.getMessage((byte) 0x60);
+		llmessage.setGroupAddress((byte) 0xFF);
+
+		return message;
+	}
 
 	@Override
 	public Device getDeviceType() {

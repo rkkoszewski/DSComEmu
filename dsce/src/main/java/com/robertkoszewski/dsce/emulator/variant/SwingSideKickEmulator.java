@@ -76,10 +76,21 @@ public class SwingSideKickEmulator extends SideKickEmulator {
 		}
 		super.stop();
 	}
+	
+	private Color lastColor = Color.BLACK;
 
 	@Override
 	public void setColor(Color color) {
+		this.lastColor = color;
+		float bfactor = (brightness & 0xFF) / 100f;
+		color = new Color(Math.round(color.getRed() * bfactor), Math.round(color.getGreen() * bfactor), Math.round(color.getBlue() * bfactor)); // Simulate Brightness Regulation
 		frame.getContentPane().setBackground(color); // Update GUI Color
+	}
+	
+	@Override
+	public void setBrightness(int brightness) {
+		super.setBrightness(brightness);
+		setColor(lastColor); // Update Color
 	}
 	
 	@Override

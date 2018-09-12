@@ -182,23 +182,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Get Current State Response
 	 * @return
 	 */
-	protected CurrentStateMessageWrapper getCurrentStateResponse() {
-		CurrentStateMessageWrapper message = new CurrentStateMessageWrapper(CurrentStateMessageWrapper.SIDEKICK_PAYLOAD_SIZE);
-		message.setName(name);
-		message.setGroupNumber(groupNumber);
-		message.setGroupName(groupName);
-		message.setMode(mode);
-		message.setBrightness(brightness);
-		message.setAmbientColor(ambientColor);
-		message.setAmbientScene(ambientScene);
-		message.setDevice(getDeviceType());
-		
-		// Message Details
-		DSMessage llmessage = message.getMessage((byte) 0x60);
-		llmessage.setGroupAddress((byte) 0xFF);
-
-		return message;
-	}
+	abstract CurrentStateMessageWrapper getCurrentStateResponse();
 	
 	// Device Controls
 	
@@ -282,7 +266,6 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		if(brightness > 100 || brightness < 0) 
 			throw new NumberFormatException("Value can only be between 0 and 100");
 		this.brightness = (byte) (brightness & 0xFF);
-		System.out.println("CHANGING BRIGHTNESS TO: " + brightness);
 	}
 	
 	/**

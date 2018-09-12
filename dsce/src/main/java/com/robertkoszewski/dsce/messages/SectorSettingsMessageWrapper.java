@@ -31,10 +31,10 @@ public class SectorSettingsMessageWrapper extends DSMessageWrapper{
 	// Constructor
 	
 	public SectorSettingsMessageWrapper(byte group) {
-		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_SECTOR_SETTING, DSMessage.COMMAND_LOWER_SECTOR_SETTING, new byte[30]));
+		super(new DSMessage(group, DSMessage.FLAG_BROADCAST_TO_GROUP, DSMessage.COMMAND_UPPER_SECTOR_SETTING, DSMessage.COMMAND_LOWER_SECTOR_SETTING, new byte[15]));
 	}
 	
-	public SectorSettingsMessageWrapper(byte group, byte[] sectorSettings) {
+	public SectorSettingsMessageWrapper(byte group, int[] sectorSettings) {
 		this(group);
 		setSectorSettings(sectorSettings);
 	}
@@ -49,18 +49,42 @@ public class SectorSettingsMessageWrapper extends DSMessageWrapper{
 	 * Get Device Name
 	 * @return
 	 */
-	public byte[] getSectorSettings() {
-		return message.getPayload();
+	public int[] getSectorSettings() {
+		// Build Temporary Array 
+		int secNum = 0;
+		int[] tempSectors = new int[12];
+		for(byte sector : message.getPayload()) {
+			int sectorInt = sector & 0xFF;
+			if(sectorInt == 0) break; // Skip when no more sectors are available
+			if(sectorInt < 0 || sectorInt > 12) continue; // Ignore invalid ranges
+			tempSectors[secNum] = sectorInt;
+			secNum++;
+			if(secNum == 12) return tempSectors; // No more than 12 sectors. Can return directly
+		}
+
+		// Shorten Array
+		int[] sectorList = new int[secNum];
+		for(int i = 0; i < secNum; i++) {
+			sectorList[i] = tempSectors[i];
+		}
+
+		return sectorList;
 	}
 
 	/**
 	 * Set Device Name
 	 * @param mode
 	 */
-	public void setSectorSettings(byte[] sectorSettings) {
-		message.setPayload(sectorSettings);		
+	public void setSectorSettings(int[] sectorSettings) {
+		byte[] sectors = new byte[15];
+		
+		for(int i = 0; i < 12 && i < sectorSettings.length ; i++) {
+			sectors[i] = (byte) (sectorSettings[i] & 0xFF);
+		}
+		
+		message.setPayload(sectors);		
 	}
 	
 	// Flags
-	// public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST; // ??
+	public static final byte FLAG_UNICAST = DSMessage.FLAG_UNICAST;
 }
