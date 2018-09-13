@@ -24,9 +24,13 @@ package com.robertkoszewski.dsce.emulator;
 
 import java.awt.Color;
 import java.net.InetAddress;
+import java.util.Random;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
+import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
 import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
@@ -54,7 +58,6 @@ public class SideKickEmulator extends GenericEmulator {
 				// Discard message targeted to other group
 				byte targetGroup = message.getGroupAddress();
 				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
-					// System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
 					return;
 				}
 				
@@ -65,11 +68,13 @@ public class SideKickEmulator extends GenericEmulator {
 					break;
 					
 				case SUBSCRIPTION_REQUEST: // Subscription Request
+					if(mode != Mode.VIDEO && mode != Mode.MUSIC) break; 
 					message.setPayload(DSMessage.SUBSCRIPTION_REQUEST_ACK_PAYLOAD); // Acknowledge Subscription
 					sendMessage(senderIP, message);
 					break;
 					
 				case SCREEN_SECTOR_DATA:
+					if(mode != Mode.VIDEO && mode != Mode.MUSIC) break; 
 					setScreenColors(new ScreenColor(message.getPayload()));
 					break;
 
@@ -81,14 +86,76 @@ public class SideKickEmulator extends GenericEmulator {
 	}
 	
 	// Variables
-	private int[] screenSectors = new int[0];
+	private int[] screenSectors = new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 	
 	// Methods - Overrides
 	
 	@Override
 	public void setAmbientColor(Color color, boolean broadcastToGroup) {
 		super.setAmbientColor(color, broadcastToGroup);
-		setColor(color);
+		if(mode == Mode.AMBIENT && ambientMode == AmbientMode.RGB) setColor(color);
+	}
+	
+	@Override
+	public void setAmbientMode(AmbientMode ambientMode) {
+		if(this.ambientMode == ambientMode) return; // No changes
+		super.setAmbientMode(ambientMode);
+		// Switch Ambient Mode
+		switch(ambientMode) {
+		case RGB:
+			setColor(ambientColor);
+			break;
+		case SCENE:
+			runAmbientScene(ambientScene);
+			break;
+		}
+	}
+	
+	@Override
+	public void setAmbientScene(AmbientScene ambientScene) {
+		if(this.ambientScene == ambientScene) return; // No changes
+		super.setAmbientScene(ambientScene);
+		runAmbientScene(ambientScene);
+	}
+	
+	/**
+	 * Run Ambient Scene (Is called when Mode=Ambient and AmbientMode=Ambient)
+	 * @param ambientScene
+	 */
+	public void runAmbientScene(AmbientScene ambientScene) {
+		if(mode == Mode.AMBIENT && ambientMode == AmbientMode.SCENE) {
+			// Ambient Scenes (Static Implementation)
+			switch(ambientScene) {
+			case ENCHANTEDFOREST:
+				setColor(Color.GREEN);
+				break;
+			case FIRESIDE:
+				setColor(Color.ORANGE);
+				break;
+			case HOLIDAY:
+				setColor(Color.GREEN.darker());
+				break;
+			case JULY4TH:
+				setColor(Color.BLUE);
+				break;
+			case OCEAN:
+				setColor(Color.CYAN);
+				break;
+			case POP:
+				setColor(Color.MAGENTA);
+				break;
+			case RAINBOW:
+				setColor(Color.YELLOW);
+				break;
+			case RANDOMCOLOR:
+				Random rand = new Random();
+				setColor(new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+				break;
+			case TWINKLE:
+				setColor(Color.GRAY);
+				break;
+			}
+		}
 	}
 	
 	// Methods
@@ -98,7 +165,8 @@ public class SideKickEmulator extends GenericEmulator {
 	 * @param scolor
 	 */
 	public void setScreenColors(ScreenColor scolor) {
-		setColor(scolor.getAverageColor(screenSectors));
+		if(mode == Mode.VIDEO || mode == Mode.MUSIC)
+			setColor(scolor.getAverageColor(screenSectors));
 	}
 	
 	/**
@@ -107,6 +175,24 @@ public class SideKickEmulator extends GenericEmulator {
 	 */
 	public void setColor(Color color) {
 		// Method to be overriden
+	}
+	
+	@Override
+	public void setMode(Mode mode) {
+		if(this.mode == mode) return; // Ignore setting same modes
+		super.setMode(mode);
+
+		// Perform Changes for transitioning
+		switch(mode) {
+		case AMBIENT:
+			setColor(ambientColor);
+			break;
+		case SLEEP:
+		case MUSIC:
+		case VIDEO:
+			setColor(Color.BLACK);
+			break;
+		}
 	}
 	
 	/**

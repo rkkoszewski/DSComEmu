@@ -92,7 +92,7 @@ public class SwingSideKickEmulator extends SideKickEmulator {
 		super.setBrightness(brightness);
 		setColor(lastColor); // Update Color
 	}
-	
+
 	@Override
 	public void setGroupName(String name) {
 		super.setGroupName(name);

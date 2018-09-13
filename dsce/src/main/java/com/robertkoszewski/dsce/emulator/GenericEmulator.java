@@ -74,7 +74,6 @@ public abstract class GenericEmulator implements IGenericEmulator {
 				// Discard message targeted to other group
 				byte targetGroup = message.getGroupAddress();
 				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
-					// System.out.println("IGNORING MESSAGE TARGETED FOR OTHER GROUP");
 					return;
 				}
 				
@@ -141,6 +140,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	protected byte brightness;
 	protected Color ambientColor; 
 	protected AmbientScene ambientScene;
+	protected AmbientMode ambientMode;
 	
 	protected final SocketListener socket;
 	private boolean running = false;
@@ -273,7 +273,15 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * @param ambientMode
 	 */
 	public void setAmbientMode(AmbientMode ambientMode) {
-		// { Implementation Dependent }
+		this.ambientMode = ambientMode;
+	}
+	
+	/**
+	 * Get Ambient Mode
+	 * @return
+	 */
+	public AmbientMode getAmbientMode() {
+		return this.ambientMode;
 	}
 	
 	/**

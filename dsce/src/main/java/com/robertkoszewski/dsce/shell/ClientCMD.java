@@ -537,6 +537,25 @@ public class ClientCMD {
 				return "Display messages received from DreamSreen devices";
 			}
 		});
+		
+		// COMMAND: exit
+		shell.addCommand("exit", new Command() {
+
+			@Override
+			public void run(ShellContext context, String args) {
+				System.exit(0);
+			}
+
+			@Override
+			public String help() {
+				return description() + ". No parameters required.";
+			}
+
+			@Override
+			public String description() {
+				return "Exits the CLI and closes the application";
+			}
+		});
 
 		// Run Shell
 		System.out.println("====================================================================");
