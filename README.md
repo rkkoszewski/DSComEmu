@@ -1,4 +1,4 @@
-# DSce - A unofficial DreamScreen compatible Client, CLI, Emulator and Debugger
+# DreamScreen Commander & Emulator (DSce) - An unofficial DreamScreen compatible Client, CLI, Emulator and Debugger
 
 This project is formed of several components:
 
@@ -8,9 +8,10 @@ This project is formed of several components:
 - **CLI Interface** that can be used to controll most of the features from this project without having to code anything. Just run the JAR file and explore what the command line interface is able to do.
 
 
-**PLEASE NOTE: This library is completely unoficial, and has no relation with the original DreamScreen developers. The implementation is purely based on documentation found in the internet and my own observations.**
+**PLEASE NOTE: This library is completely unoficial, and has no relation with the original DreamScreen developers. The implementation is purely based on documentation found on the internet and my own observations.**
 
-This project was born in order to understand the communication protocol between a DreamScreen SideKick and a DreamScreen HD Device. DreamScreen is theoretically able to stream screen color updates at 60FPS to a SideKick device independently of the video source. The final goal is to Emulate a SideKick good enough to be able to receive the colors in realtime from an original DreamScreen HD device and be able to forward these changes to other homebrew RGB devices.
+This project was born in order to understand the communication protocol between a DreamScreen SideKick and a DreamScreen HD Device. DreamScreen is theoretically able to stream screen color updates at 60FPS to a SideKick device independently of the video source. The final goal is to Emulate a SideKick good enough to be able to receive the colors in realtime from an original DreamScreen HD device and be able to forward these to another homebrew RGB device.
+
 
 ## Quick Start Guide: ##
 
@@ -23,6 +24,7 @@ Some commands:
 - **debug**: Enables the network debug mode, any broadcasted message or directly received message will be decoded and shown in the console. 
 - **emulator**: Opens the emulator console, from where you can start a emulated device, control, clone and connect to it.
 - **exit**: Exits the CLI, or if inside of a submenu, returns to the previous menu.
+
 
 # Client: #
 To connect to a DreamScreen device use the **DSClient** class.
@@ -37,13 +39,13 @@ The **DSDevice** class represents the most basic common feature set of of the Dr
 # Emulator: #
 The available emulators can be found in the package **com.robertkoszewski.dsce.emulator**. To start an emulator simply instantiate for example a **SideKickEmulator**, and run the **start()** method to start the device emulation. An example on  how to extend an Emulator to expose the color updates can be seen in **com.robertkoszewski.dsce.emulator.variant.SwingSideKickEmulator**. Please note that the Emulator is still work in progress and doesn't supports all the feature set of the real DreamScreen devices and can lead to crashes and unexpected behaviour. 
 
+
 # TODOS: #
 - Implement group broadcasts when a device setting gets changed.
-- Understand and decode the SideKick sector messages (CUpper: 0x03 | CLower: 0x17 | Flags: 0x11) and (CUpper: 0x03 | CLower: 0x16 | Flags: 0x11)
-- Find out what is and how to reply to the message (CUpper: 0x01 | CLower: 0x0C | Flags: 0x30). This message is being sent to a SideKick when grouped with a DreamScren HD device. Seems like some kind of ping, status request that the DreamScreen HD device is performing to know the status and screen sectors of the SideKick device. As I don't own a SideKick I have no way to find this out other than by brute force or with help of somebody who do own a SideKick.
 - Finish the HDMI Active Channels decoding and encoding in the DreamScreenHD and 4K client class.
 - Implement thread saftyness.
 - Any other unfinished tasks.
+
 
 # License and Guarantee #
 The project is under the MIT License and as such doesn't offer any guarantees of any kind. Use at your own risk.
