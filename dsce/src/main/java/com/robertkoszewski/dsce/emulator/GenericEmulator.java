@@ -32,6 +32,7 @@ import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
+import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.messages.AmbientColorMessageWrapper;
@@ -121,26 +122,17 @@ public abstract class GenericEmulator implements IGenericEmulator {
 				}
 			}
 		});
-		
-		// Default Settings
-		name = "DSEmulator";
-		groupName = "undefined";
-		groupNumber = 0;
-		mode = Mode.SLEEP;
-		brightness = 100;
-		ambientColor = new Color(0,0,0);
-		ambientScene = AmbientScene.FIRESIDE;
 	}
 	
 	// Device Status
-	protected String name;
-	protected String groupName;
-	protected byte groupNumber;
-	protected Mode mode;
-	protected byte brightness;
-	protected Color ambientColor; 
-	protected AmbientScene ambientScene;
-	protected AmbientMode ambientMode;
+	protected String name = "DSEmulator";
+	protected String groupName = "undefined";
+	protected byte groupNumber = 0;
+	protected Mode mode = Mode.SLEEP;
+	protected byte brightness = 100;
+	protected Color ambientColor = Color.BLACK; 
+	protected AmbientScene ambientScene = AmbientScene.FIRESIDE;
+	protected AmbientMode ambientMode = AmbientMode.RGB;
 	
 	protected final SocketListener socket;
 	private boolean running = false;
@@ -322,6 +314,14 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void setAmbientScene(AmbientScene ambientScene) {
 		this.ambientScene = ambientScene;
+	}
+	
+	/**
+	 * Set Screen Colors
+	 * @param scolor
+	 */
+	public void setScreenColors(ScreenColor scolor) {
+		// Implementation dependent
 	}
 	
 	// Utility Functions

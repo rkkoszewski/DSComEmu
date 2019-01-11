@@ -22,17 +22,28 @@
  *******************************************************************************/
 package com.robertkoszewski.dsce.emulator;
 
+import java.awt.Color;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.Random;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DreamScreenHD;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
+import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
+import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
+import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.emulator.utils.NoopSampler;
+import com.robertkoszewski.dsce.emulator.utils.ScreenSampler;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.HDMIInputMessageWrapper;
 import com.robertkoszewski.dsce.messages.HDMINameMessageWrapper;
+import com.robertkoszewski.dsce.utils.DS;
 
 /**
  * DreamScreen HD Emulator
@@ -48,18 +59,32 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	}
 	
 	/**
-	 * Initialize DreamScreen HD Emulator with Socket
+	 * Initialize DreamScreen HD Emulator with Screen Sampler
+	 * @param sampler
+	 */
+	public DreamScreenHDEmulator(ScreenSampler sampler) {
+		this(sampler, new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER));
+	}
+	
+	/**
+	 * Initialize DreamScreen HD Emulator with Screen Sampler and Socket
 	 * @param socket
 	 */
 	public DreamScreenHDEmulator(final SocketListener socket) {
+		this(new NoopSampler(), socket);
+	}
+	
+	/**
+	 * Initialize DreamScreen HD Emulator with Socket
+	 * @param sampler
+	 * @param socket
+	 */
+	public DreamScreenHDEmulator(ScreenSampler sampler, final SocketListener socket) {
 		super(socket);
 		
-		// Defaults
-		hdmiInput = 0;
-		inputName1 = "unassigned";
-		inputName2 = "unassigned";
-		inputName3 = "unassigned";
-		hdmiActiveChannels = 1;
+		// Set Sampler
+		this.sampler = sampler;
+		sampler.init(this);
 
 		// Responses
 		callbacks.add(new MessageReceived() {
@@ -106,11 +131,13 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 
 	// Variables
 	
-	protected byte hdmiInput;
-	protected String inputName1;
-	protected String inputName2;
-	protected String inputName3;
-	protected byte hdmiActiveChannels;
+	protected byte hdmiInput = 0;
+	protected String inputName1 = "unassigned";
+	protected String inputName2 = "unassigned";
+	protected String inputName3 = "unassigned";
+	protected byte hdmiActiveChannels = 1;
+	
+	protected ScreenSampler sampler;
 	
 	// Methods
 	
@@ -143,6 +170,112 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	}
 	
 	// Device Controls
+	
+	@Override
+	public void setAmbientColor(Color color, boolean broadcastToGroup) {
+		super.setAmbientColor(color, broadcastToGroup);
+		if(mode == Mode.AMBIENT && ambientMode == AmbientMode.RGB) fillColors(color);
+	}
+	
+	@Override
+	public void setAmbientMode(AmbientMode ambientMode) {
+		if(this.ambientMode == ambientMode) return; // No changes
+		super.setAmbientMode(ambientMode);
+		// Switch Ambient Mode
+		switch(ambientMode) {
+		case RGB:
+			fillColors(ambientColor);
+			break;
+		case SCENE:
+			runAmbientScene(ambientScene);
+			break;
+		}
+	}
+	
+	@Override
+	public void setAmbientScene(AmbientScene ambientScene) {
+		if(this.ambientScene == ambientScene) return; // No changes
+		super.setAmbientScene(ambientScene);
+		runAmbientScene(ambientScene);
+	}
+	
+	/**
+	 * Run Ambient Scene (Is called when Mode=Ambient and AmbientMode=Ambient)
+	 * @param ambientScene
+	 */
+	public void runAmbientScene(AmbientScene ambientScene) {
+		if(mode == Mode.AMBIENT && ambientMode == AmbientMode.SCENE) {
+			// Ambient Scenes (Static Implementation)
+			switch(ambientScene) {
+			case ENCHANTEDFOREST:
+				fillColors(Color.GREEN);
+				break;
+			case FIRESIDE:
+				fillColors(Color.ORANGE);
+				break;
+			case HOLIDAY:
+				fillColors(Color.GREEN.darker());
+				break;
+			case JULY4TH:
+				fillColors(Color.BLUE);
+				break;
+			case OCEAN:
+				fillColors(Color.CYAN);
+				break;
+			case POP:
+				fillColors(Color.MAGENTA);
+				break;
+			case RAINBOW:
+				fillColors(Color.YELLOW);
+				break;
+			case RANDOMCOLOR:
+				Random rand = new Random();
+				fillColors(new Color(rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)));
+				break;
+			case TWINKLE:
+				fillColors(Color.GRAY);
+				break;
+			}
+		}
+	}
+	
+	@Override
+	public void setMode(Mode mode) {
+		if(this.mode == mode) return; // Ignore setting same modes
+
+		// Switch Modes
+		switch(mode) {
+			case AMBIENT:
+				fillColors(ambientColor);
+				break;
+			case MUSIC: // TODO: May be implemented in the future
+			case SLEEP:
+				byte[] black = new byte[36]; Arrays.fill(black, (byte) 0);
+				setColors(new ScreenColor(black));
+				break;
+			case VIDEO: 
+				sampler.start();
+				break;
+		}
+		
+		// Stop Sampler
+		if(this.mode == Mode.VIDEO && mode != Mode.VIDEO) {
+			sampler.stop();
+		}
+			
+		super.setMode(mode);
+	}
+
+	@Override
+	public void setGroupNumber(byte groupNumber) {
+		super.setGroupNumber(groupNumber);
+		
+		if(groupNumber == 0) {
+			stopSubscriptionThread();
+		}else {
+			startSubscriptionThread();
+		}
+	}
 	
 	/**
 	 * Get HDMI Input
@@ -224,6 +357,110 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 */
 	public void setHDMIActiveChannels(byte hdmiActiveChannels) {
 		this.hdmiActiveChannels = hdmiActiveChannels;
+	}
+	
+	/**
+	 * Set the Virtual Screen Sector Colors (This is to be called by the Screen Grabber, etc)
+	 * @param scolor
+	 */
+	public void setScreenColors(ScreenColor scolor) {
+		setColors(scolor);
+		if(mode == Mode.VIDEO || mode == Mode.MUSIC)
+			sendScreenColors(scolor);
+	}
+	
+	/**
+	 * Send Screen Colors to all Subscribed Devices
+	 * @param scolor
+	 */
+	protected void sendScreenColors(ScreenColor scolor) {
+		// TODO: TO BE IMPLEMENTED. Send out the colors to the subscribers
+	}
+	
+	/**
+	 * Fill all sectors with same color
+	 * @param color
+	 */
+	protected void fillColors(Color color) {
+		Color[] colors = new Color[12];
+		Arrays.fill(colors, color);
+		setColors(new ScreenColor(colors));
+	}
+	
+	/**
+	 * Sets the Final Screen Sector Colors (HDMI, Colors, Ambient, etc)
+	 * @param scolor
+	 */
+	protected void setColors(ScreenColor scolor) {
+		// Method to be overriden
+	}
+	
+	// Subscription Thread
+	private SubscriptionThread subscription_thread;
+	
+	/**
+	 * Start Subscription Thread
+	 */
+	private void startSubscriptionThread() {
+		if(subscription_thread == null) {
+			try {
+				subscription_thread = new SubscriptionThread(this);
+			} catch (UnknownHostException e) {
+				e.printStackTrace(); // Should not happen, but in case it does it will show up in the console. (Caused probably due to OS limits)
+			}
+		}
+	}
+	
+	/**
+	 * Stop Subscription Thread
+	 */
+	private void stopSubscriptionThread() {
+		if(subscription_thread != null) {
+			subscription_thread.interrupt();
+			subscription_thread = null;
+		}
+	}
+
+	// Subscription Thread
+	private class SubscriptionThread extends Thread {
+		
+		public SubscriptionThread(DreamScreenHDEmulator dsemulator) throws UnknownHostException {
+			this.dsemulator = dsemulator;
+			
+			// Get Broadcast IP
+			this.broadcast = InetAddress.getByName("255.255.255.255");
+			
+			// Build Message
+			this.subscription_request = new DSMessage();
+			subscription_request.setCommandLower(DSMessage.COMMAND_LOWER_SUBSCRIPTION_REQUEST);
+			subscription_request.setCommandUpper(DSMessage.COMMAND_UPPER_SUBSCRIPTION_REQUEST);
+			subscription_request.setFlags((byte) 0xFF); // TODO: FIND OUT WHAT FLAG
+			subscription_request.setPayload(new byte[0]); // TODO: IS THIS THE CORRECT PAYLOAD?
+		}
+		
+		private final DreamScreenHDEmulator dsemulator;
+		private final DSMessage subscription_request;
+		private final InetAddress broadcast;
+		
+		@Override
+		public void run() {
+			super.run();
+			
+			while(!this.isInterrupted()) {
+				
+				System.out.println("SENDING SUBSCRIPTION REQUEST TO GROUP: " + dsemulator.getGroupNumber());
+				
+				subscription_request.setGroupAddress(dsemulator.getGroupNumber());
+				sendMessage(broadcast, subscription_request);
+				
+				try {
+					Thread.sleep(5000); // Sleep 5 seconds
+				} catch (InterruptedException e) {} 
+			}
+			
+	
+			
+		}
 	}
 	
 	// Utility Functions

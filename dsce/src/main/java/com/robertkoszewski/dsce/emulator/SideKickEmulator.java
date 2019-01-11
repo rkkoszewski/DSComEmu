@@ -208,11 +208,6 @@ public class SideKickEmulator extends GenericEmulator {
 		message.setAmbientColor(ambientColor);
 		message.setAmbientScene(ambientScene);
 		message.setActiveSectors(screenSectors);
-		
-		// Message Details
-		DSMessage llmessage = message.getMessage((byte) 0x60);
-		llmessage.setGroupAddress((byte) 0xFF);
-
 		return message;
 	}
 

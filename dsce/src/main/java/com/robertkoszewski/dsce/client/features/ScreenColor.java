@@ -34,12 +34,23 @@ public class ScreenColor {
 		this.sectors = new byte[36];
 	}
 	
-	public ScreenColor(byte[] sectors) {
+	public ScreenColor(byte... sectors) {
 		if(sectors.length != 36) {
 			System.err.println("ERROR: Expected 36 bytes of sector data but got " + sectors.length);
 			this.sectors = new byte[36];
 		}else {
 			this.sectors = sectors;
+		}
+	}
+	
+	public ScreenColor(Color... sectors) {
+		this.sectors = new byte[36];
+		if(sectors.length != 12) {
+			System.err.println("ERROR: Expected 36 bytes of sector data but got " + sectors.length);
+		}else {
+			for(int i = 0; i < sectors.length; i++) {
+				setColor(i + 1, sectors[i]);
+			}
 		}
 	}
 
@@ -54,7 +65,8 @@ public class ScreenColor {
 	public Color getColor(int sector) {
 		//if(sector < 1) sector = 1;
 		//else if(sector > 12) sector = 12;
-		return new Color(sectors[sector-1] & 0xFF, sectors[sector] & 0xFF, sectors[sector+1] & 0xFF);
+		int isector = sector * 3;
+		return new Color(this.sectors[isector-3] & 0xFF, this.sectors[isector-2] & 0xFF, this.sectors[isector-1] & 0xFF);
 	}
 	
 	/**

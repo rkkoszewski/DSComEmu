@@ -38,6 +38,7 @@ public class DSDebugger {
 	
 	private final SocketListener socket;
 	private boolean running = false;
+	private boolean showHex = true;
 	
 	private MessageReceived DEBUG_CALLBACK = new MessageReceived() {
 		public void run(DSMessage message, InetAddress senderIP, int senderPort) {
@@ -51,7 +52,8 @@ public class DSDebugger {
 							" | Payload: 0x" + StringUtils.bytesToHex(message.getPayload()) +
 							" | Payload (char): " + new String(message.getPayload())
 							: "") +
-					" | Command: " + message.getCommand().name());
+					" | Command: " + message.getCommand().name() + 
+					(showHex ? " | Hex: 0x" + StringUtils.bytesToHex(message.getMessage()) : ""));
 		}
 	};
 	
@@ -59,10 +61,20 @@ public class DSDebugger {
 		this(new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER));
 	}
 	
+	public DSDebugger(boolean showHex) {
+		this(new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER));
+		this.showHex = showHex;
+	}
+	
 	public DSDebugger(SocketListener socket) {
 		this.socket = socket;
-		//socket.setEnableDebugMode(true);
 	}
+	
+	public DSDebugger(SocketListener socket, boolean showHex) {
+		this.socket = socket;
+		this.showHex = showHex;
+	}
+
 
 	/**
 	 * Start Debugger

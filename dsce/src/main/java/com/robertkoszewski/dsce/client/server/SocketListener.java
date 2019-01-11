@@ -157,6 +157,7 @@ public class SocketListener {
 			try {
 				serverSocket = new DatagramSocket(port);
 				serverSocket.setReuseAddress(true);
+				serverSocket.setBroadcast(true);
 			
 				DatagramPacket receivePacket = new DatagramPacket(new byte[buffer_size], buffer_size);
 				while(!this.isInterrupted()) {
@@ -246,6 +247,7 @@ public class SocketListener {
 		}else {
 			// Manually send
 			DatagramSocket socket = new DatagramSocket(port);
+			socket.setBroadcast(true);
 			socket.setReuseAddress(true);
 			DatagramPacket packet = new DatagramPacket(message, message.length, dest_ip, port);
 			socket.send(packet);

@@ -36,7 +36,7 @@ public class DSUtils {
 	public static byte calculate_crc8(byte[] data, int length) {
 		byte crc = 0x00;
 		for (int i=0;i<length;i++) 
-	         crc = CRC8_TABLE[(crc ^ data[i])&0xFF]; 
+	         crc = CRC8_TABLE[(crc ^ data[i]) & 0xFF]; 
 	     return crc; 
 	}
 	

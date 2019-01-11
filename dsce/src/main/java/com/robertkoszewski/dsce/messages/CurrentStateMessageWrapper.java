@@ -40,7 +40,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	// Constructor
 	
 	public CurrentStateMessageWrapper(Device deviceType) {
-		super(new DSMessage((byte)0, DSMessage.FLAG_BROADCAST_TO_ALL, DSMessage.COMMAND_UPPER_CURRENT_STATE, DSMessage.COMMAND_LOWER_CURRENT_STATE, 
+		super(new DSMessage((byte) 0xFF, DSMessage.FLAG_STATUS, DSMessage.COMMAND_UPPER_CURRENT_STATE, DSMessage.COMMAND_LOWER_CURRENT_STATE, 
 				deviceType == Device.SIDEKICK ? 
 						new byte[SIDEKICK_PAYLOAD_SIZE] : 
 							new byte[DREAMSCREEN_PAYLOAD_SIZE]));

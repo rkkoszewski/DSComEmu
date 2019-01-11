@@ -37,8 +37,8 @@ import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.debugger.DSDebugger;
 import com.robertkoszewski.dsce.emulator.DreamScreen4KEmulator;
-import com.robertkoszewski.dsce.emulator.DreamScreenHDEmulator;
 import com.robertkoszewski.dsce.emulator.GenericEmulator;
+import com.robertkoszewski.dsce.emulator.variant.SwingDreamScreenHDEmulator;
 import com.robertkoszewski.dsce.emulator.variant.SwingSideKickEmulator;
 import com.robertkoszewski.dsce.utils.DS;
 import com.robertkoszewski.dsce.utils.StringUtils;
@@ -409,7 +409,7 @@ public class ClientCMD {
 									services.emu = new DreamScreen4KEmulator(socket);
 									break;
 								case DREAMSCREENHD:
-									services.emu = new DreamScreenHDEmulator(socket);
+									services.emu = new SwingDreamScreenHDEmulator(socket);
 									break;
 								case SIDEKICK:
 									services.emu = new SwingSideKickEmulator(socket);
