@@ -44,6 +44,7 @@ import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.HDMIInputMessageWrapper;
 import com.robertkoszewski.dsce.messages.HDMINameMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
 
 /**
  * DreamScreen HD Emulator
@@ -57,7 +58,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	public DreamScreenHDEmulator() {
 		super();
 	}
-	
+
 	/**
 	 * Initialize DreamScreen HD Emulator with Screen Sampler
 	 * @param sampler
@@ -67,15 +68,32 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	}
 	
 	/**
+	 * Initialize DreamScreen HD Emulator with Network Interface
+	 * @param networkInterface
+	 */
+	public DreamScreenHDEmulator(NetworkInterface networkInterface) {
+		super(networkInterface);
+	}
+	
+	/**
+	 * Initialize DreamScreen HD Emulator with Network Interface and Screen Sampler
+	 * @param sampler
+	 * @param networkInterface
+	 */
+	public DreamScreenHDEmulator(ScreenSampler sampler, NetworkInterface networkInterface) {
+		super(networkInterface);
+	}
+	
+	/**
 	 * Initialize DreamScreen HD Emulator with Screen Sampler and Socket
 	 * @param socket
 	 */
-	public DreamScreenHDEmulator(final SocketListener socket) {
+	public DreamScreenHDEmulator(SocketListener socket) {
 		this(new NoopSampler(), socket);
 	}
 	
 	/**
-	 * Initialize DreamScreen HD Emulator with Socket
+	 * Initialize DreamScreen HD Emulator with Screen Sampler and Socket
 	 * @param sampler
 	 * @param socket
 	 */
@@ -375,6 +393,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 */
 	protected void sendScreenColors(ScreenColor scolor) {
 		// TODO: TO BE IMPLEMENTED. Send out the colors to the subscribers
+		System.out.println("SEDING COLORS!!!!");
 	}
 	
 	/**
@@ -392,7 +411,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * @param scolor
 	 */
 	protected void setColors(ScreenColor scolor) {
-		// Method to be overriden
+		// Method to be overridden
 	}
 	
 	// Subscription Thread

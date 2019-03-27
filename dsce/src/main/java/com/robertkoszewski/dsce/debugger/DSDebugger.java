@@ -84,7 +84,7 @@ public class DSDebugger {
 		running = true;
 		// Add Callback
 		socket.addCallback(DEBUG_CALLBACK);
-		socket.setEnableAutoStartClose(false);
+		socket.setEnableAutoStartStop(false);
 		socket.start();
 	}
 	
@@ -96,7 +96,7 @@ public class DSDebugger {
 		
 		// Remove Callback
 		socket.removeCallback(DEBUG_CALLBACK);
-		socket.setEnableAutoStartClose(true);
+		socket.setEnableAutoStartStop(true);
 		running = false;
 	}
 }

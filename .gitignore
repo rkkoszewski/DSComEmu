@@ -53,3 +53,6 @@ local.properties
 .cache-main
 .scala_dependencies
 .worksheet
+
+# Test File used during Development
+dsce/src/main/java/Test.java

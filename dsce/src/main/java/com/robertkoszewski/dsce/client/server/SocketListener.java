@@ -33,6 +33,7 @@ import java.util.Iterator;
 
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.InvalidMessageException;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
 import com.robertkoszewski.dsce.utils.StringUtils;
 
 /**
@@ -45,12 +46,23 @@ public class SocketListener {
 	private final int port;
 	private final ArrayList<MessageReceived> messageReceivedCallbacks;
 	private ServerThread serverThread = null;
-	private boolean autoStartClose = true;
+	private boolean autoStartStop = true;
 	private boolean debugMode = false;
+	private NetworkInterface networkInterface;
 	
-	public SocketListener(int port, int buffer_size, boolean autoStartClose) {
+	public SocketListener(int port, int buffer_size, boolean autoStartStop, NetworkInterface networkInterface) {
+		this(port, buffer_size, autoStartStop);
+		this.networkInterface = networkInterface;
+	}
+	
+	public SocketListener(int port, int buffer_size, boolean autoStartStop) {
 		this(port, buffer_size);
-		this.autoStartClose = autoStartClose;
+		this.autoStartStop = autoStartStop;
+	}
+	
+	public SocketListener(int port, int buffer_size, NetworkInterface networkInterface) {
+		this(port, buffer_size);
+		this.networkInterface = networkInterface;
 	}
 	
 	public SocketListener(int port, int buffer_size) {
@@ -97,11 +109,11 @@ public class SocketListener {
 	}
 	
 	/**
-	 * Enable/Disable Auto Start Close
+	 * Enable/Disable Auto Start Stop
 	 * @param enable
 	 */
-	public void setEnableAutoStartClose(boolean enable) {
-		this.autoStartClose = enable;
+	public void setEnableAutoStartStop(boolean enable) {
+		this.autoStartStop = enable;
 	}
 	
 	/**
@@ -113,7 +125,7 @@ public class SocketListener {
 		for(MessageReceived callback: messageReceived)
 			messageReceivedCallbacks.add(callback);
 		// Auto Start Server
-		if(autoStartClose) 
+		if(autoStartStop) 
 			if(serverThread == null || !serverThread.isAlive())
 				start();
 	}
@@ -127,7 +139,7 @@ public class SocketListener {
 		for(MessageReceived callback: messageReceived)
 			messageReceivedCallbacks.remove(callback);
 		// Auto Stop Server
-		if(autoStartClose && messageReceivedCallbacks.size() == 0) 
+		if(autoStartStop && messageReceivedCallbacks.size() == 0) 
 			if(serverThread != null && serverThread.isAlive())
 				stop();
 	}
@@ -139,7 +151,7 @@ public class SocketListener {
 		// Clear all Callbacks
 		messageReceivedCallbacks.clear();
 		// Auto Stop Server
-		if(autoStartClose && messageReceivedCallbacks.size() == 0) 
+		if(autoStartStop && messageReceivedCallbacks.size() == 0) 
 			if(serverThread != null && serverThread.isAlive())
 				stop();
 	}
@@ -155,7 +167,7 @@ public class SocketListener {
 		 */
 		public void run() {
 			try {
-				serverSocket = new DatagramSocket(port);
+				serverSocket = networkInterface != null ? networkInterface.newDatagramSocket(port) : new DatagramSocket(port);;
 				serverSocket.setReuseAddress(true);
 				serverSocket.setBroadcast(true);
 			
@@ -164,6 +176,8 @@ public class SocketListener {
 					try {
 						// Receive Packet
 						serverSocket.receive(receivePacket);
+						
+						
 						
 						// Parse Packet
 						byte[] data = Arrays.copyOfRange(receivePacket.getData(), 0, receivePacket.getLength());
@@ -174,6 +188,10 @@ public class SocketListener {
 							int srcPort = receivePacket.getPort();
 							if(debugMode) System.out.println("+Message Received: (" + srcIP.getHostAddress() + ":" + srcPort + ") - 0x" + StringUtils.bytesToHex(data));
 							DSMessage message = new DSMessage(data);
+							
+							// Ignore Update Messages from Self
+							if(message.getFlags() == DSMessage.FLAG_BROADCAST_TO_GROUP && receivePacket.getAddress().equals(serverSocket.getLocalAddress()))
+								continue;
 							
 							// Run Callbacks
 							for(Iterator<MessageReceived> it = messageReceivedCallbacks.iterator(); it.hasNext(); ) {
@@ -246,7 +264,7 @@ public class SocketListener {
 			serverThread.send(dest_ip, message);
 		}else {
 			// Manually send
-			DatagramSocket socket = new DatagramSocket(port);
+			DatagramSocket socket = networkInterface != null ? networkInterface.newDatagramSocket(port) : new DatagramSocket(port);
 			socket.setBroadcast(true);
 			socket.setReuseAddress(true);
 			DatagramPacket packet = new DatagramPacket(message, message.length, dest_ip, port);
@@ -281,11 +299,11 @@ public class SocketListener {
 	 * @param message
 	 * @throws IOException 
 	 */
-	public static void sendStaticMessage(InetAddress dest_ip, byte[] message, int port) throws IOException {
-		DatagramSocket socket = new DatagramSocket();
+	public void sendStaticMessage(InetAddress dest_ip, byte[] message, int port) throws IOException {
+		DatagramSocket socket = networkInterface != null ? networkInterface.newDatagramSocket(0) : new DatagramSocket();
 		socket.setBroadcast(true);
 		socket.setReuseAddress(true);
-		//System.out.println("SENDING PACKET: " + StringUtils.bytesToHex(message) + " to " + ip.toString());
+		//System.out.println("SENDING PACKET: " + StringUtils.bytesToHex(message) + " to " + dest_ip.toString());
 		DatagramPacket packet = new DatagramPacket(message, message.length, dest_ip, port);
 		socket.send(packet);
 		socket.close();

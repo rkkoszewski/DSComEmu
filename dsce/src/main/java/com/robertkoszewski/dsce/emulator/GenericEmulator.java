@@ -25,6 +25,7 @@ package com.robertkoszewski.dsce.emulator;
 import java.awt.Color;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -41,11 +42,13 @@ import com.robertkoszewski.dsce.messages.AmbientSceneMessageWrapper;
 import com.robertkoszewski.dsce.messages.BrightnessMessageWrapper;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
+import com.robertkoszewski.dsce.messages.DSMessageWrapper;
 import com.robertkoszewski.dsce.messages.DeviceNameMessageWrapper;
 import com.robertkoszewski.dsce.messages.GroupNameMessageWrapper;
 import com.robertkoszewski.dsce.messages.ModeMessageWrapper;
 import com.robertkoszewski.dsce.messages.GroupNumberMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
 
 /**
  * Generic DS Device Emulator
@@ -61,6 +64,14 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	}
 	
 	/**
+	 * Initialize Generic Emulator with Network Interface
+	 * @param networkInterface
+	 */
+	public GenericEmulator(NetworkInterface networkInterface) {
+		this(new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER, networkInterface));
+	}
+	
+	/**
 	 * Initialize Generic Emulator with Socket
 	 * @param socket
 	 */
@@ -72,9 +83,12 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		callbacks.add(new MessageReceived() {
 			@Override
 			public void run(DSMessage message, InetAddress senderIP, int senderPort) {
-				// Discard message targeted to other group
+				
+				// Ignored Message Types
 				byte targetGroup = message.getGroupAddress();
-				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber()) {
+				if(targetGroup != 0 && (targetGroup & 0xFF) != 0xFF && targetGroup != getGroupNumber() || // Ignore message targeted to other group
+				   targetGroup == 0 && message.getFlags() == DSMessage.FLAG_BROADCAST_TO_GROUP // Ignore group updates in group 0
+				  ){
 					return;
 				}
 				
@@ -258,6 +272,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		if(brightness > 100 || brightness < 0) 
 			throw new NumberFormatException("Value can only be between 0 and 100");
 		this.brightness = (byte) (brightness & 0xFF);
+		sendUpdateMessage(new BrightnessMessageWrapper(this.groupNumber, brightness)); // Update Message
 	}
 	
 	/**
@@ -351,6 +366,18 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		try {
 			socket.sendMessage(senderIP, dsMessage);
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Send Update Message
+	 * @param dsMessageWrapper
+	 */
+	protected void sendUpdateMessage(DSMessageWrapper dsMessageWrapper) {
+		try {
+			sendMessage(InetAddress.getByName("255.255.255.255"), dsMessageWrapper.getMessage(DSMessage.FLAG_BROADCAST_TO_GROUP));
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 	}

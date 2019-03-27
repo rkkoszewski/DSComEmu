@@ -41,6 +41,7 @@ import com.robertkoszewski.dsce.emulator.GenericEmulator;
 import com.robertkoszewski.dsce.emulator.variant.SwingDreamScreenHDEmulator;
 import com.robertkoszewski.dsce.emulator.variant.SwingSideKickEmulator;
 import com.robertkoszewski.dsce.utils.DS;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
 import com.robertkoszewski.dsce.utils.StringUtils;
 
 /**

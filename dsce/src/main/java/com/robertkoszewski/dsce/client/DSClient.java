@@ -35,6 +35,9 @@ import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.utils.DS;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
+
+// TODO: Implement realtime variant of getDevice for realtime value updates
 
 /**
  * DS Client for scanning and connecting to DS devices
@@ -51,6 +54,14 @@ public class DSClient {
 		this.socket = new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER);
 	}
 	
+	/**
+	 * DS Client bound to Network Interface
+	 * @param hostIP
+	 */
+	public DSClient(NetworkInterface networkInterface) {
+		this.socket = new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER, networkInterface);
+	}
+
 	/**
 	 * DS Client with Explicit Socket
 	 * @param socket
@@ -91,8 +102,9 @@ public class DSClient {
 		// Send Query Message
 		try {
 			int tries = 3;
+			InetAddress broadcast = InetAddress.getByName("255.255.255.255");
 			while(tries-- > 0) {
-				socket.sendMessage(InetAddress.getByName("255.255.255.255"), DSMessage.MESSAGE_READ_CURRENT_STATE);
+				socket.sendMessage(broadcast, DSMessage.MESSAGE_READ_CURRENT_STATE);
 				Thread.sleep(500); // 0.5 second of timeout
 			}
 		} catch (InterruptedException e) {

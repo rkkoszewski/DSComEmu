@@ -24,23 +24,66 @@ package com.robertkoszewski.dsce.emulator;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.emulator.utils.NoopSampler;
+import com.robertkoszewski.dsce.emulator.utils.ScreenSampler;
+import com.robertkoszewski.dsce.utils.DS;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
 
+/**
+ * DreamScreen 4K Emulator 
+ * @author Robert Koszewski
+ */
 public class DreamScreen4KEmulator extends DreamScreenHDEmulator {
 	
 	/**
-	 * Initialize DreamScreen HD Emulator
+	 * Initialize DreamScreen 4K Emulator
 	 */
 	public DreamScreen4KEmulator() {
 		super();
 	}
 	
 	/**
-	 * Initialize DreamScreen HD Emulator with Socket
-	 * @param socket
+	 * Initialize DreamScreen 4K Emulator with Screen Sampler
+	 * @param sampler
+	 */
+	public DreamScreen4KEmulator(ScreenSampler sampler) {
+		this(sampler, new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER));
+	}
+	
+	/**
+	 * Initialize DreamScreen 4K Emulator with Network Interface
+	 * @param networkInterface
+	 */
+	public DreamScreen4KEmulator(NetworkInterface networkInterface) {
+		super(networkInterface);
+	}
+	
+	/**
+	 * Initialize DreamScreen 4K Emulator with Network Interface and Screen Sampler
+	 * @param sampler
+	 * @param networkInterface
+	 */
+	public DreamScreen4KEmulator(ScreenSampler sampler, NetworkInterface networkInterface) {
+		super(networkInterface);
+	}
+	
+	/**
+	 * Initialize DreamScreen 4K Emulator with Socket
+	 * @param sampler
 	 */
 	public DreamScreen4KEmulator(SocketListener socket) {
+		super(new NoopSampler(), socket);
+	}
+	
+	/**
+	 * Initialize DreamScreen 4K Emulator with Screen Sampler and Socket
+	 * @param sampler
+	 * @param socket
+	 */
+	public DreamScreen4KEmulator(ScreenSampler sampler, final SocketListener socket) {
 		super(socket);
 	}
+
 
 	@Override
 	public Device getDeviceType() {

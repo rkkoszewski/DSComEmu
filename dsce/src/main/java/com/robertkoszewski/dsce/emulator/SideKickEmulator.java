@@ -37,6 +37,7 @@ import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.SectorSettingsMessageWrapper;
+import com.robertkoszewski.dsce.utils.NetworkInterface;
 
 /**
  * SideKick Emulator
@@ -44,10 +45,25 @@ import com.robertkoszewski.dsce.messages.SectorSettingsMessageWrapper;
  */
 public class SideKickEmulator extends GenericEmulator {
 
+	/**
+	 * Initialize SideKick Emulator
+	 */
 	public SideKickEmulator() {
 		super();
 	}
 	
+	/**
+	 * Initialize SideKick Emulator with Network Interface
+	 * @param networkInterface
+	 */
+	public SideKickEmulator(NetworkInterface networkInterface) {
+		super(networkInterface);
+	}
+	
+	/**
+	 * Initialize SideKick Emulator with Socket
+	 * @param socket
+	 */
 	public SideKickEmulator(final SocketListener socket) {
 		super(socket);
 
