@@ -20,7 +20,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *******************************************************************************/
-package com.robertkoszewski.dsce.client.features;
+package com.robertkoszewski.dsce.features;
 
 import java.awt.Color;
 
@@ -40,6 +40,13 @@ public class ScreenColor {
 			this.sectors = new byte[36];
 		}else {
 			this.sectors = sectors;
+		}
+	}
+	
+	public ScreenColor(Color color) {
+		this.sectors = new byte[36];
+		for(int i = 0; i < 12; i++) {
+			setColor(i + 1, color);
 		}
 	}
 	

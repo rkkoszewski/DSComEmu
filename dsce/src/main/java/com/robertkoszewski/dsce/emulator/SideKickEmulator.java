@@ -31,9 +31,9 @@ import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
-import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.features.ScreenColor;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.SectorSettingsMessageWrapper;
@@ -84,7 +84,6 @@ public class SideKickEmulator extends GenericEmulator {
 					break;
 					
 				case SUBSCRIPTION_REQUEST: // Subscription Request
-					if(mode != Mode.VIDEO && mode != Mode.MUSIC) break; 
 					message.setPayload(DSMessage.SUBSCRIPTION_REQUEST_ACK_PAYLOAD); // Acknowledge Subscription
 					sendMessage(senderIP, message);
 					break;
@@ -134,6 +133,8 @@ public class SideKickEmulator extends GenericEmulator {
 		runAmbientScene(ambientScene);
 	}
 	
+	// Device Internal Functions
+	
 	/**
 	 * Run Ambient Scene (Is called when Mode=Ambient and AmbientMode=Ambient)
 	 * @param ambientScene
@@ -174,8 +175,6 @@ public class SideKickEmulator extends GenericEmulator {
 		}
 	}
 	
-	// Methods
-	
 	/**
 	 * Set Screen Colors (Independent of configured screen sectors)
 	 * @param scolor
@@ -193,6 +192,11 @@ public class SideKickEmulator extends GenericEmulator {
 		// Method to be overriden
 	}
 	
+	// Overridden Functions
+	
+	/**
+	 * Set Mode
+	 */
 	@Override
 	public void setMode(Mode mode) {
 		if(this.mode == mode) return; // Ignore setting same modes
@@ -214,6 +218,7 @@ public class SideKickEmulator extends GenericEmulator {
 	/**
 	 * Current State Message
 	 */
+	@Override
 	protected CurrentStateMessageWrapper getCurrentStateResponse() {
 		CurrentStateMessageWrapper message = new CurrentStateMessageWrapper(getDeviceType());
 		message.setName(name);
@@ -224,6 +229,7 @@ public class SideKickEmulator extends GenericEmulator {
 		message.setAmbientColor(ambientColor);
 		message.setAmbientScene(ambientScene);
 		message.setActiveSectors(screenSectors);
+		message.setColorSaturation(saturationR, saturationG, saturationB);
 		return message;
 	}
 

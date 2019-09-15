@@ -23,9 +23,12 @@
 package com.robertkoszewski.dsce.emulator;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Random;
 
 import com.robertkoszewski.dsce.client.devices.DSDevice;
@@ -34,13 +37,16 @@ import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
-import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.emulator.utils.NoopSampler;
-import com.robertkoszewski.dsce.emulator.utils.ScreenSampler;
+import com.robertkoszewski.dsce.emulator.utils.ColorSampler;
+import com.robertkoszewski.dsce.emulator.utils.SubscribedDevice;
+import com.robertkoszewski.dsce.features.HDMIActiveChannels;
+import com.robertkoszewski.dsce.features.ScreenColor;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
+import com.robertkoszewski.dsce.messages.HDMIActiveChannelMessageWrapper;
 import com.robertkoszewski.dsce.messages.HDMIInputMessageWrapper;
 import com.robertkoszewski.dsce.messages.HDMINameMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
@@ -51,6 +57,12 @@ import com.robertkoszewski.dsce.utils.NetworkInterface;
  * @author Robert Koszewski
  */
 public class DreamScreenHDEmulator extends GenericEmulator {
+	
+	// Static Settings
+	
+	private static final long FRAME_MS = 16;
+	
+	// Constructors
 	
 	/**
 	 * Initialize DreamScreen HD Emulator
@@ -63,7 +75,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * Initialize DreamScreen HD Emulator with Screen Sampler
 	 * @param sampler
 	 */
-	public DreamScreenHDEmulator(ScreenSampler sampler) {
+	public DreamScreenHDEmulator(ColorSampler sampler) {
 		this(sampler, new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER));
 	}
 	
@@ -80,7 +92,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * @param sampler
 	 * @param networkInterface
 	 */
-	public DreamScreenHDEmulator(ScreenSampler sampler, NetworkInterface networkInterface) {
+	public DreamScreenHDEmulator(ColorSampler sampler, NetworkInterface networkInterface) {
 		super(networkInterface);
 	}
 	
@@ -97,7 +109,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * @param sampler
 	 * @param socket
 	 */
-	public DreamScreenHDEmulator(ScreenSampler sampler, final SocketListener socket) {
+	public DreamScreenHDEmulator(ColorSampler sampler, final SocketListener socket) {
 		super(socket);
 		
 		// Set Sampler
@@ -117,7 +129,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 				// Supported Commands
 				switch(message.getCommand()) {
 				case HDMI_ACTIVE_CHANNELS: // Get List of Active HDMI Channels
-					// TODO: Implement this
+					setHDMIActiveChannels(new HDMIActiveChannelMessageWrapper(message).getHDMIActiveChannels());
 					break;
 				
 				case HDMI_INPUT_STATUS: // Probably means restore to previous state
@@ -139,6 +151,27 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 				case HDMI_NAME_3: // Set HDMI 3 Input Name
 					setHDMIInput3Name(new HDMINameMessageWrapper(message).getInputName());
 					break;
+					
+				case SUBSCRIPTION_REQUEST: // Subscription Request
+					byte[] payload = message.getPayload();
+					if(payload == null) break;
+					if (Arrays.equals(payload, DSMessage.SUBSCRIPTION_REQUEST_ACK_PAYLOAD)) {
+						
+						String senderIPAddress = senderIP.getHostAddress();
+						synchronized(subscriptions) {
+							SubscribedDevice subscription = subscriptions.get(senderIPAddress);
+							if(subscription != null) {
+								// Device Exists
+								System.out.println("SUBSCRIPTION TOCK");
+								subscription.tock();
+							} else {
+								// Device Doesn't Exist
+								System.out.println("NEW SUBSCRIPTION");
+								subscriptions.put(senderIPAddress, new SubscribedDevice(senderIP));
+							}
+						}
+					}
+					break;
 
 				// Ignore any other commands
 				default: break; 
@@ -155,7 +188,8 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	protected String inputName3 = "unassigned";
 	protected byte hdmiActiveChannels = 1;
 	
-	protected ScreenSampler sampler;
+	protected ColorSampler sampler;
+	protected HashMap<String, SubscribedDevice> subscriptions = new HashMap<String, SubscribedDevice>();
 	
 	// Methods
 	
@@ -174,6 +208,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 		message.setBrightness(brightness);
 		message.setAmbientColor(ambientColor);
 		message.setAmbientScene(ambientScene);
+		message.setColorSaturation(saturationR, saturationG, saturationB);
 		message.setHDMIInput(hdmiInput);
 		message.setHDMIInput1Name(inputName1);
 		message.setHDMIInput2Name(inputName2);
@@ -288,7 +323,9 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	public void setGroupNumber(byte groupNumber) {
 		super.setGroupNumber(groupNumber);
 		
-		if(groupNumber == 0) {
+		System.out.println("SETTING GROUP NUMBER");
+		
+		if(groupNumber == 0x00) {
 			stopSubscriptionThread();
 		}else {
 			startSubscriptionThread();
@@ -311,6 +348,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 		if(hdmiInput < 1) hdmiInput = 1;
 		else if(hdmiInput > 3) hdmiInput = 3;
 		this.hdmiInput = (byte) ((hdmiInput - 1) & 0xFF);
+		sendUpdateMessage(new HDMIInputMessageWrapper(this.groupNumber, this.hdmiInput)); // Update Message
 	}
 	
 	/**
@@ -327,6 +365,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 */
 	public void setHDMIInput1Name(String name) {
 		this.inputName1 = name;
+		sendUpdateMessage(new HDMINameMessageWrapper(this.groupNumber, 1, name)); // Update Message
 	}
 	
 	/**
@@ -343,6 +382,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 */
 	public void setHDMIInput2Name(String name) {
 		this.inputName2 = name;
+		sendUpdateMessage(new HDMINameMessageWrapper(this.groupNumber, 2, name)); // Update Message
 	}
 	
 	/**
@@ -359,6 +399,7 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 */
 	public void setHDMIInput3Name(String name) {
 		this.inputName3 = name;
+		sendUpdateMessage(new HDMINameMessageWrapper(this.groupNumber, 2, name)); // Update Message
 	}
 	
 	/**
@@ -373,8 +414,9 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * Set HDMI Active Channels
 	 * @param hdmiInput
 	 */
-	public void setHDMIActiveChannels(byte hdmiActiveChannels) {
-		this.hdmiActiveChannels = hdmiActiveChannels;
+	public void setHDMIActiveChannels(HDMIActiveChannels hdmiActiveChannels) {
+		this.hdmiActiveChannels = hdmiActiveChannels.getByte();
+		sendUpdateMessage(new HDMIActiveChannelMessageWrapper(this.groupNumber, hdmiActiveChannels)); // Update Message
 	}
 	
 	/**
@@ -382,10 +424,14 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * @param scolor
 	 */
 	public void setScreenColors(ScreenColor scolor) {
-		setColors(scolor);
-		if(mode == Mode.VIDEO || mode == Mode.MUSIC)
-			sendScreenColors(scolor);
+		if(mode == Mode.VIDEO || mode == Mode.MUSIC) {
+			setColors(scolor);
+			if(groupNumber != 0x00) sendScreenColors(scolor);
+		}
 	}
+	
+	
+	long lastFrameTime = 0;
 	
 	/**
 	 * Send Screen Colors to all Subscribed Devices
@@ -393,7 +439,42 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 */
 	protected void sendScreenColors(ScreenColor scolor) {
 		// TODO: TO BE IMPLEMENTED. Send out the colors to the subscribers
-		System.out.println("SEDING COLORS!!!!");
+//		System.out.println("SEDING COLORS!!!! " + subscriptions.size());
+		
+		// Color Message
+		DSMessage message = new DSMessage(groupNumber, DSMessage.FLAG_SCREEN_SECTOR_DATA, DSMessage.COMMAND_UPPER_SCREEN_SECTOR_DATA, DSMessage.COMMAND_LOWER_SCREEN_SECTOR_DATA);
+		message.setPayload(scolor.getPayload());
+		
+		//System.out.println(message.toDebugString());
+
+		System.currentTimeMillis();
+		
+		// Send to Subscriptors
+		synchronized(subscriptions) {
+			Iterator<SubscribedDevice> sit = subscriptions.values().iterator();
+			while(sit.hasNext()) {
+				SubscribedDevice subscription = sit.next();
+				//sendMessage(subscription.ip, message);
+//				System.out.println("SENDING TO: " + subscription.ip.getHostAddress());
+				try {
+					socket.sendStaticMessage(subscription.ip, message);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		// Force 60FPS to avoid saturating network
+		long currentFrameTime = System.currentTimeMillis();
+		long timeDiff = currentFrameTime - lastFrameTime;
+		if(timeDiff < 16) {
+			try {
+				Thread.sleep(16 - timeDiff); 
+			} catch (InterruptedException e) {} 
+			lastFrameTime = System.currentTimeMillis();
+		}else {
+			lastFrameTime = currentFrameTime;
+		}
 	}
 	
 	/**
@@ -421,9 +502,12 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * Start Subscription Thread
 	 */
 	private void startSubscriptionThread() {
+		System.out.println("+ START SUBSCRIPTION THREAD");
 		if(subscription_thread == null) {
+			System.out.println("+ START SUBSCRIPTION START");
 			try {
 				subscription_thread = new SubscriptionThread(this);
+				subscription_thread.start();
 			} catch (UnknownHostException e) {
 				e.printStackTrace(); // Should not happen, but in case it does it will show up in the console. (Caused probably due to OS limits)
 			}
@@ -434,7 +518,9 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 	 * Stop Subscription Thread
 	 */
 	private void stopSubscriptionThread() {
+		System.out.println("STOP SUBSCRIPTION THREAD");
 		if(subscription_thread != null) {
+			System.out.println("STOP SUBSCRIPTION STOP");
 			subscription_thread.interrupt();
 			subscription_thread = null;
 		}
@@ -453,8 +539,8 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 			this.subscription_request = new DSMessage();
 			subscription_request.setCommandLower(DSMessage.COMMAND_LOWER_SUBSCRIPTION_REQUEST);
 			subscription_request.setCommandUpper(DSMessage.COMMAND_UPPER_SUBSCRIPTION_REQUEST);
-			subscription_request.setFlags((byte) 0xFF); // TODO: FIND OUT WHAT FLAG
-			subscription_request.setPayload(new byte[0]); // TODO: IS THIS THE CORRECT PAYLOAD?
+			subscription_request.setFlags(DSMessage.FLAG_SUBSCRIPTION_REQUEST);
+			subscription_request.setPayload(new byte[0]);
 		}
 		
 		private final DreamScreenHDEmulator dsemulator;
@@ -476,9 +562,36 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 					Thread.sleep(5000); // Sleep 5 seconds
 				} catch (InterruptedException e) {} 
 			}
-			
+		}
+	}
 	
-			
+	/**
+	 * Active HDMI Input
+	 */
+	public enum ActiveHDMIInput{
+		HDMI1,
+		HDMI2,
+		HDMI3;
+		
+		public byte toByte(ActiveHDMIInput activeInput) {
+			switch(activeInput) {
+			case HDMI1:
+				return 0x00;
+			case HDMI2:
+				return 0x01;
+			case HDMI3:
+				return 0x02;
+			}
+			return 0x00;
+		} 
+		
+		public ActiveHDMIInput fromByte(byte activeInputByte) {
+			switch(activeInputByte) {
+				case 0x00: return HDMI1;
+				case 0x01: return HDMI2;
+				case 0x02: return HDMI3;
+			}
+			return HDMI1;
 		}
 	}
 	

@@ -176,9 +176,7 @@ public class SocketListener {
 					try {
 						// Receive Packet
 						serverSocket.receive(receivePacket);
-						
-						
-						
+
 						// Parse Packet
 						byte[] data = Arrays.copyOfRange(receivePacket.getData(), 0, receivePacket.getLength());
 						
@@ -186,7 +184,7 @@ public class SocketListener {
 							// Parse DS Message
 							InetAddress srcIP = receivePacket.getAddress();
 							int srcPort = receivePacket.getPort();
-							if(debugMode) System.out.println("+Message Received: (" + srcIP.getHostAddress() + ":" + srcPort + ") - 0x" + StringUtils.bytesToHex(data));
+							if(debugMode) System.out.println("Message Received: (" + srcIP.getHostAddress() + ":" + srcPort + ") - 0x" + StringUtils.bytesToHex(data));
 							DSMessage message = new DSMessage(data);
 							
 							// Ignore Update Messages from Self
@@ -229,7 +227,9 @@ public class SocketListener {
 		public void send(InetAddress dest_ip, byte[] message) throws IOException {
 			if(serverSocket != null) {
 				DatagramPacket packet = new DatagramPacket(message, message.length, dest_ip, port);
-				serverSocket.send(packet);
+				synchronized(serverThread) {
+					serverSocket.send(packet);
+				}
 			}
 		}
 		
@@ -259,7 +259,6 @@ public class SocketListener {
 	 * @throws IOException
 	 */
 	public void sendMessage(InetAddress dest_ip, byte[] message) throws IOException {
-		// TODO: Fix threading issues here
 		if(serverThread != null) {
 			serverThread.send(dest_ip, message);
 		}else {
@@ -303,7 +302,6 @@ public class SocketListener {
 		DatagramSocket socket = networkInterface != null ? networkInterface.newDatagramSocket(0) : new DatagramSocket();
 		socket.setBroadcast(true);
 		socket.setReuseAddress(true);
-		//System.out.println("SENDING PACKET: " + StringUtils.bytesToHex(message) + " to " + dest_ip.toString());
 		DatagramPacket packet = new DatagramPacket(message, message.length, dest_ip, port);
 		socket.send(packet);
 		socket.close();

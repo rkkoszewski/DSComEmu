@@ -25,14 +25,14 @@ package com.robertkoszewski.dsce.emulator.utils;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
-import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.emulator.DreamScreenHDEmulator;
+import com.robertkoszewski.dsce.features.ScreenColor;
 
 /**
  * Simple Average Sampler with custom Screen Grabber
  * @author Robert Koszewski
  */
-public class SimpleAverageSampler implements ScreenSampler {
+public class SimpleAverageSampler implements ColorSampler {
 	
 	// Constructors
 	

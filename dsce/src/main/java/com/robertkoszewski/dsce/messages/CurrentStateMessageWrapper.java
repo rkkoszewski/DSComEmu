@@ -201,7 +201,7 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 	}
 
 	/**
-	 * 
+	 * Set Ambient Color
 	 * @param color
 	 */
 	public void setAmbientColor(Color color) {
@@ -225,6 +225,48 @@ public class CurrentStateMessageWrapper extends DSMessageWrapper{
 			payload[40] = r;
 			payload[41] = g;
 			payload[42] = b;
+		}
+	}
+	
+	/**
+	 * Get Saturation Color
+	 * @return
+	 */
+	public Color getColorSaturation() {
+		byte[] payload = message.getPayload();
+		if(this.deviceType == Device.SIDEKICK) {
+			return new Color(payload[38] & 0xFF, payload[39] & 0xFF, payload[40] & 0xFF);
+		}else {
+			// DreamScreen HD and 4K
+			return new Color(payload[43] & 0xFF, payload[44] & 0xFF, payload[45] & 0xFF);
+		}
+	}
+
+	/**
+	 * Set Saturation Color
+	 * @param color
+	 */
+	public void setColorSaturation(Color color) {
+		setColorSaturation((byte)color.getRed(), (byte)color.getGreen(), (byte)color.getBlue());
+	}
+	
+	/**
+	 * Set Saturation Color
+	 * @param r
+	 * @param g
+	 * @param b
+	 */
+	public void setColorSaturation(byte r, byte g, byte b) {
+		byte[] payload = message.getPayload();
+		if(this.deviceType == Device.SIDEKICK) {
+			payload[38] = r;
+			payload[39] = g;
+			payload[40] = b;
+		}else {
+			// DreamScreen HD and 4K
+			payload[43] = r;
+			payload[44] = g;
+			payload[45] = b;
 		}
 	}
 

@@ -46,7 +46,7 @@ public class SectorSettingsMessageWrapper extends DSMessageWrapper{
 	// Methods
 	
 	/**
-	 * Get Device Name
+	 * Get Sector Settings
 	 * @return
 	 */
 	public int[] getSectorSettings() {
@@ -72,7 +72,7 @@ public class SectorSettingsMessageWrapper extends DSMessageWrapper{
 	}
 
 	/**
-	 * Set Device Name
+	 * Set Sector Settings
 	 * @param mode
 	 */
 	public void setSectorSettings(int[] sectorSettings) {

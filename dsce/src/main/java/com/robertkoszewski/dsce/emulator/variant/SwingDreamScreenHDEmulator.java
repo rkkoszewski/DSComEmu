@@ -28,10 +28,10 @@ import java.awt.GridLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.emulator.DreamScreenHDEmulator;
-import com.robertkoszewski.dsce.emulator.utils.ScreenSampler;
+import com.robertkoszewski.dsce.emulator.utils.ColorSampler;
+import com.robertkoszewski.dsce.features.ScreenColor;
 
 /**
  * DreamScreenHD Emulator with Visual Zone Preview
@@ -43,11 +43,11 @@ public class SwingDreamScreenHDEmulator extends DreamScreenHDEmulator{
 		super();
 	}
 	
-	public SwingDreamScreenHDEmulator(ScreenSampler sampler) {
+	public SwingDreamScreenHDEmulator(ColorSampler sampler) {
 		super(sampler);
 	}
 	
-	public SwingDreamScreenHDEmulator(ScreenSampler sampler, final SocketListener socket) {
+	public SwingDreamScreenHDEmulator(ColorSampler sampler, final SocketListener socket) {
 		super(sampler, socket);
 	}
 	
@@ -108,8 +108,14 @@ public class SwingDreamScreenHDEmulator extends DreamScreenHDEmulator{
 			frame.getContentPane().add(s12);
 			frame.getContentPane().add(s1);
 			frame.setVisible(true);
+			
+			// Set Default Colors
+			setColors(new ScreenColor(
+					Color.BLACK, Color.BLACK, Color.BLACK, 
+					Color.BLACK, Color.BLACK, Color.BLACK, 
+					Color.BLACK, Color.BLACK, Color.BLACK, 
+					Color.BLACK, Color.BLACK, Color.BLACK));
 		}
-		
 		
 		super.start();
 	}
@@ -157,8 +163,8 @@ public class SwingDreamScreenHDEmulator extends DreamScreenHDEmulator{
 	// Callbacks to Update Brightness
 	
 	@Override
-	public void setBrightness(int brightness) {
-		super.setBrightness(brightness);
+	public void setBrightness(int brightness, boolean broadcastToGroup) {
+		super.setBrightness(brightness, broadcastToGroup);
 		setColors(this.lastColors);
 	}
 	

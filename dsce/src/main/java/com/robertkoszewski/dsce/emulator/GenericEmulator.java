@@ -33,13 +33,14 @@ import com.robertkoszewski.dsce.client.devices.DSDevice;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientMode;
 import com.robertkoszewski.dsce.client.devices.DSDevice.AmbientScene;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Mode;
-import com.robertkoszewski.dsce.client.features.ScreenColor;
 import com.robertkoszewski.dsce.client.server.MessageReceived;
 import com.robertkoszewski.dsce.client.server.SocketListener;
+import com.robertkoszewski.dsce.features.ScreenColor;
 import com.robertkoszewski.dsce.messages.AmbientColorMessageWrapper;
 import com.robertkoszewski.dsce.messages.AmbientModeMessageWrapper;
 import com.robertkoszewski.dsce.messages.AmbientSceneMessageWrapper;
 import com.robertkoszewski.dsce.messages.BrightnessMessageWrapper;
+import com.robertkoszewski.dsce.messages.ColorSaturationMessageWrapper;
 import com.robertkoszewski.dsce.messages.CurrentStateMessageWrapper;
 import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.DSMessageWrapper;
@@ -124,11 +125,16 @@ public abstract class GenericEmulator implements IGenericEmulator {
 					break;
 					
 				case BRIGHTNESS: // Set Brightness
-					setBrightness(new BrightnessMessageWrapper(message).getBrightness());
+					setBrightness(new BrightnessMessageWrapper(message).getBrightness(), 
+							message.getFlags() == BrightnessMessageWrapper.FLAG_UNICAST);
 					break;
 
 				case MODE: // Set Device Mode
 					setMode(new ModeMessageWrapper(message).getMode()); 
+					break;
+					
+				case SATURATION_SETTING: // Saturation Settings
+					setColorSaturation(new ColorSaturationMessageWrapper(message).getColorSaturation());
 					break;
 					
 				// Ignore any other commands
@@ -147,6 +153,9 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	protected Color ambientColor = Color.BLACK; 
 	protected AmbientScene ambientScene = AmbientScene.FIRESIDE;
 	protected AmbientMode ambientMode = AmbientMode.RGB;
+	protected byte saturationR = (byte) 255;
+	protected byte saturationG = (byte) 255;
+	protected byte saturationB = (byte) 255;
 	
 	protected final SocketListener socket;
 	private boolean running = false;
@@ -206,6 +215,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void setName(String name) {
 		this.name = name;
+		sendUpdateMessage(new DeviceNameMessageWrapper(this.groupNumber, name)); // Update Message
 	}
 
 	/**
@@ -222,6 +232,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void setGroupName(String name) {
 		this.groupName = name;
+		sendUpdateMessage(new GroupNameMessageWrapper(this.groupNumber, groupName)); // Update Message
 	}
 	
 	/**
@@ -237,7 +248,10 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * @param groupNumber
 	 */
 	public void setGroupNumber(byte groupNumber) {
+		byte prevGroupNumber = this.groupNumber;
 		this.groupNumber = groupNumber;
+		sendUpdateMessage(new GroupNumberMessageWrapper(prevGroupNumber, groupNumber)); // Update Message (Group Number)
+		sendUpdateMessage(new GroupNameMessageWrapper(prevGroupNumber, groupName)); // Update Message (Group Name)
 	}
 	
 	/**
@@ -254,6 +268,39 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void setMode(Mode mode) {
 		this.mode = mode;
+		sendUpdateMessage(new ModeMessageWrapper(this.groupNumber, mode)); // Update Message
+	}
+	
+	/**
+	 * Get Color Saturation
+	 * @return
+	 */
+	public Color getColorSaturation() {
+		return new Color(saturationR, saturationG, saturationB);
+	}
+	
+	/**
+	 * Set Color Saturation
+	 * @param saturation
+	 */
+	public void setColorSaturation(Color saturation) {
+		saturationR = (byte) saturation.getRed();
+		saturationG = (byte) saturation.getGreen();
+		saturationB = (byte) saturation.getBlue();
+		sendUpdateMessage(new ColorSaturationMessageWrapper(this.groupNumber, saturation)); // Update Message
+	}
+	
+	/**
+	 * Set Color Saturation
+	 * @param r
+	 * @param g
+	 * @param b
+	 */
+	public void setColorSaturation(byte r, byte g, byte b) {
+		saturationR = r;
+		saturationG = g;
+		saturationB = b;
+		sendUpdateMessage(new ColorSaturationMessageWrapper(this.groupNumber, r, g, b)); // Update Message
 	}
 	
 	/**
@@ -268,19 +315,12 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 * Set Mode
 	 * @param groupNumber
 	 */
-	public void setBrightness(int brightness) {
+	public void setBrightness(int brightness, boolean broadcastToGroup) {
 		if(brightness > 100 || brightness < 0) 
 			throw new NumberFormatException("Value can only be between 0 and 100");
 		this.brightness = (byte) (brightness & 0xFF);
-		sendUpdateMessage(new BrightnessMessageWrapper(this.groupNumber, brightness)); // Update Message
-	}
-	
-	/**
-	 * Set Ambient Mode
-	 * @param ambientMode
-	 */
-	public void setAmbientMode(AmbientMode ambientMode) {
-		this.ambientMode = ambientMode;
+		if(broadcastToGroup)
+			sendUpdateMessage(new BrightnessMessageWrapper(this.groupNumber, brightness)); // Update Message
 	}
 	
 	/**
@@ -292,6 +332,15 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	}
 	
 	/**
+	 * Set Ambient Mode
+	 * @param ambientMode
+	 */
+	public void setAmbientMode(AmbientMode ambientMode) {
+		this.ambientMode = ambientMode;
+		sendUpdateMessage(new AmbientModeMessageWrapper(this.groupNumber, ambientMode)); // Update Message
+	}
+
+	/**
 	 * Get Ambient Color
 	 * @return
 	 */
@@ -300,19 +349,23 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	}
 
 	/**
-	 * Set  Ambient Color
+	 * Set Ambient Color
 	 * @param groupNumber
 	 */
 	public void setAmbientColor(Color color, boolean broadcastToGroup) {
 		this.ambientColor = color;
+		if(broadcastToGroup)
+			sendUpdateMessage(new AmbientColorMessageWrapper(this.groupNumber, color)); // Update Message
 	}
 	
 	/**
-	 * Set  Ambient Color
+	 * Set Ambient Color
 	 * @param groupNumber
 	 */
 	public void setAmbientColor(byte r, byte g, byte b, boolean broadcastToGroup) {
 		this.ambientColor = new Color(r, g, b);
+		if(broadcastToGroup)
+			sendUpdateMessage(new AmbientColorMessageWrapper(this.groupNumber, this.ambientColor)); // Update Message
 	}
 
 	/**
@@ -329,7 +382,10 @@ public abstract class GenericEmulator implements IGenericEmulator {
 	 */
 	public void setAmbientScene(AmbientScene ambientScene) {
 		this.ambientScene = ambientScene;
+		sendUpdateMessage(new AmbientSceneMessageWrapper(this.groupNumber, ambientScene)); // Update Message
 	}
+	
+	// Device Internal Functions
 	
 	/**
 	 * Set Screen Colors
@@ -355,7 +411,7 @@ public abstract class GenericEmulator implements IGenericEmulator {
 		this.ambientColor = device.getAmbientColor();
 	}
 	
-	// Helpers
+	// Helper Functions
 	
 	/**
 	 * Send Message

@@ -20,32 +20,30 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *******************************************************************************/
-package com.robertkoszewski.dsce.client.features;
+package com.robertkoszewski.dsce.emulator.utils;
 
-public class HDMIActiveChannels {
+import com.robertkoszewski.dsce.emulator.DreamScreenHDEmulator;
 
-	public HDMIActiveChannels(Active activeChannel, Status hdmi1Status, Status hdmi2Status, Status hdmi3Status) {
-		// TODO: To be continued. 
-		// Bits 2 to 0 Indicate HDMI
-		// Inputs 3 to 1 (0 - HDMI
-		// Not Valid. 1 - HDMI Valid)
-	}
+/**
+ * The ScreenSampler class is the one responsible to update the color areas of the virtual screen by calling setScreenColors
+ * 
+ * @author Robert Koszewski
+ */
+public interface ColorSampler {
 	
-	// Variables
+	/**
+	 * The init parameter is called once after the Emulator is running
+	 * @param dsemulator
+	 */
+	public void init(DreamScreenHDEmulator dsemulator);
 	
-	private Active activeChannel;
-	private Status hdmi0Status;
-	private Status hdmi1Status;
-	private Status hdmi2Status;
+	/**
+	 * Start Sampling
+	 */
+	public void start();
 	
-	public enum Status{
-		VALID,
-		INVALID
-	}
-	
-	public enum Active{
-		HDMI1,
-		HDMI2,
-		HDMI3
-	}
+	/**
+	 * Stop Sampling
+	 */
+	public void stop();
 }

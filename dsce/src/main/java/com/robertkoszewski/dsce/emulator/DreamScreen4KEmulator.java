@@ -25,7 +25,7 @@ package com.robertkoszewski.dsce.emulator;
 import com.robertkoszewski.dsce.client.devices.DSDevice.Device;
 import com.robertkoszewski.dsce.client.server.SocketListener;
 import com.robertkoszewski.dsce.emulator.utils.NoopSampler;
-import com.robertkoszewski.dsce.emulator.utils.ScreenSampler;
+import com.robertkoszewski.dsce.emulator.utils.ColorSampler;
 import com.robertkoszewski.dsce.utils.DS;
 import com.robertkoszewski.dsce.utils.NetworkInterface;
 
@@ -46,7 +46,7 @@ public class DreamScreen4KEmulator extends DreamScreenHDEmulator {
 	 * Initialize DreamScreen 4K Emulator with Screen Sampler
 	 * @param sampler
 	 */
-	public DreamScreen4KEmulator(ScreenSampler sampler) {
+	public DreamScreen4KEmulator(ColorSampler sampler) {
 		this(sampler, new SocketListener(DS.DS_PORT, DS.DS_MAX_BUFFER));
 	}
 	
@@ -63,7 +63,7 @@ public class DreamScreen4KEmulator extends DreamScreenHDEmulator {
 	 * @param sampler
 	 * @param networkInterface
 	 */
-	public DreamScreen4KEmulator(ScreenSampler sampler, NetworkInterface networkInterface) {
+	public DreamScreen4KEmulator(ColorSampler sampler, NetworkInterface networkInterface) {
 		super(networkInterface);
 	}
 	
@@ -80,7 +80,7 @@ public class DreamScreen4KEmulator extends DreamScreenHDEmulator {
 	 * @param sampler
 	 * @param socket
 	 */
-	public DreamScreen4KEmulator(ScreenSampler sampler, final SocketListener socket) {
+	public DreamScreen4KEmulator(ColorSampler sampler, final SocketListener socket) {
 		super(socket);
 	}
 

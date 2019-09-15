@@ -36,6 +36,7 @@ import com.robertkoszewski.dsce.messages.DSMessage;
 import com.robertkoszewski.dsce.messages.DeviceNameMessageWrapper;
 import com.robertkoszewski.dsce.messages.InvalidMessageException;
 import com.robertkoszewski.dsce.messages.ModeMessageWrapper;
+import com.robertkoszewski.dsce.messages.ColorSaturationMessageWrapper;
 import com.robertkoszewski.dsce.messages.GroupNumberMessageWrapper;
 import com.robertkoszewski.dsce.utils.DS;
 
@@ -115,6 +116,7 @@ public abstract class DSDevice implements IDSDevice{
 	private byte brightness;
 	private Color ambientColor;
 	private byte ambientScene;
+	private Color saturation;
 	
 	// Socket
 	protected SocketListener socket;
@@ -133,6 +135,7 @@ public abstract class DSDevice implements IDSDevice{
 		brightness = csmessage.getBrightness();
 		ambientColor = csmessage.getAmbientColor();
 		ambientScene = csmessage.getAmbientScene();
+		saturation = csmessage.getColorSaturation();
 	}
 	
 	/**
@@ -287,6 +290,24 @@ public abstract class DSDevice implements IDSDevice{
 	 */
 	public void setAmbientMode(AmbientMode mode) throws IOException {
 		socket.sendStaticMessage(getIP(), new AmbientModeMessageWrapper(groupNumber, mode).getMessage(AmbientModeMessageWrapper.FLAG_UNICAST));
+	}
+	
+	/**
+	 * Get Color Saturation
+	 * @return
+	 */
+	public Color getColorSaturation() {
+		return this.saturation;
+	}
+	
+	/**
+	 * Set Color Saturation
+	 * @param saturation
+	 * @throws IOException
+	 */
+	public void setColorSaturation(Color saturation) throws IOException {
+		this.saturation = saturation;
+		socket.sendStaticMessage(getIP(), new ColorSaturationMessageWrapper(groupNumber, saturation).getMessage(ColorSaturationMessageWrapper.FLAG_UNICAST)); 
 	}
 
 	// Static Methods

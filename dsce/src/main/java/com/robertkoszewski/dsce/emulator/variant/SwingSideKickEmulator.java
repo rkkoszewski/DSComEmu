@@ -88,12 +88,12 @@ public class SwingSideKickEmulator extends SideKickEmulator {
 	}
 	
 	@Override
-	public void setBrightness(int brightness) {
-		super.setBrightness(brightness);
+	public void setBrightness(int brightness, boolean broadcastToGroup) {
+		super.setBrightness(brightness, broadcastToGroup);
 		setColor(lastColor); // Update Color
 	}
 	
-	// Callbacks to update Title
+	// Callback to update Title
 
 	@Override
 	public void setGroupName(String name) {

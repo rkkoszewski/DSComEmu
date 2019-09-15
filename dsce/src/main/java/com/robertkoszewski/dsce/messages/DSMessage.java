@@ -99,7 +99,7 @@ public class DSMessage {
 	public DSMessage(byte[] message, boolean validateCRC) throws InvalidMessageException {
 		// Validate Message
 		if(message.length < 7) { // Message has a minimum of 7 bytes of size
-			throw new InvalidMessageException("Message length is under the minimum of 7 bytes");
+			throw new InvalidMessageException("Message length is " + message.length +" which is under the minimum of 7 bytes");
 		}
 		
 		// Validate Start of Packet
@@ -244,6 +244,23 @@ public class DSMessage {
 		return command;
 	}
 	
+	/**
+	 * Message Debug String
+	 * @return
+	 */
+	public String toDebugString() {
+		return 	"GrAddr: 0x" + StringUtils.bytesToHex(getGroupAddress()) +
+				" | CUpper: 0x" + StringUtils.bytesToHex(getCommandUpper()) + 
+				" | CLower: 0x" + StringUtils.bytesToHex(getCommandLower()) + 
+				" | Flags: 0x" + StringUtils.bytesToHex(getFlags()) +
+				(payload.length != 0 ? 
+						" | Payload: 0x" + StringUtils.bytesToHex(getPayload()) +
+						" | Payload (char): " + new String(getPayload())
+						: "") +
+				" | Command: " + getCommand().name() + 
+				" | Hex: 0x" + StringUtils.bytesToHex(getMessage());
+	}
+	
 	@Override
 	public String toString() {
 		return StringUtils.bytesToHex(getMessage());
@@ -281,6 +298,8 @@ public class DSMessage {
 	public static final byte FLAG_BROADCAST_TO_ALL = 0x21; // 0b00010001
 	public static final byte FLAG_UNICAST = 0x11;
 	public static final byte FLAG_STATUS = 0x60; // Information related or broadcast?
+	public static final byte FLAG_SCREEN_SECTOR_DATA = 0x61;
+	public static final byte FLAG_SUBSCRIPTION_REQUEST = 0x30;
 
 	// Current State
 	public static final byte COMMAND_UPPER_CURRENT_STATE = 0x01;
@@ -350,6 +369,10 @@ public class DSMessage {
 	public static final byte COMMAND_LOWER_HDMI_NAME_2 = 0x24;
 	public static final byte COMMAND_LOWER_HDMI_NAME_3 = 0x25;
 	
+	// Saturation Setting
+	public static final byte COMMAND_UPPER_SATURATION_SETTING = 0x03;
+	public static final byte COMMAND_LOWER_SATURATION_SETTING = 0x06;
+	
 	// SideKick Sector Setting
 	public static final byte COMMAND_UPPER_SECTOR_SETTING = 0x03;
 	public static final byte COMMAND_LOWER_SECTOR_SETTING = 0x17;
@@ -358,6 +381,7 @@ public class DSMessage {
 	public static final byte COMMAND_UPPER_SUBSCRIPTION_REQUEST = 0x01;
 	public static final byte COMMAND_LOWER_SUBSCRIPTION_REQUEST = 0x0C;
 	public static final byte[] SUBSCRIPTION_REQUEST_ACK_PAYLOAD = new byte[] {0x01};
+	
 	
 	// Screen Sector Data
 	public static final byte COMMAND_UPPER_SCREEN_SECTOR_DATA = 0x03;
@@ -380,6 +404,7 @@ public class DSMessage {
 		AMBIENT_COLOR,
 		AMBIENT_MODE,
 		AMBIENT_SCENE,
+		SATURATION_SETTING,
 		HDMI_ACTIVE_CHANNELS,
 		HDMI_INPUT_STATUS,
 		HDMI_INPUT,
@@ -426,6 +451,7 @@ public class DSMessage {
 					case COMMAND_LOWER_AMBIENT_COLOR: return Command.AMBIENT_COLOR;
 					case COMMAND_LOWER_AMBIENT_MODE: return Command.AMBIENT_MODE;
 					case COMMAND_LOWER_AMBIENT_SCENE: return Command.AMBIENT_SCENE;
+					case COMMAND_LOWER_SATURATION_SETTING: return Command.SATURATION_SETTING;
 					case COMMAND_LOWER_HDMI_INPUT: 
 						if(payload == null || payload.length == 0)
 							return Command.HDMI_INPUT_STATUS;

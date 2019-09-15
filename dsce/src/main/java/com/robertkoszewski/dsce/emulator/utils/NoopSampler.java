@@ -28,7 +28,7 @@ import com.robertkoszewski.dsce.emulator.DreamScreenHDEmulator;
  * No Operation Sampler
  * @author Robert Koszewski
  */
-public class NoopSampler implements ScreenSampler {
+public class NoopSampler implements ColorSampler {
 
 	@Override
 	public void init(DreamScreenHDEmulator dsemulator) { /* Do nothing */ }
