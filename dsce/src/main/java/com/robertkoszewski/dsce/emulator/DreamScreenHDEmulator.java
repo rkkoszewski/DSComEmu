@@ -58,10 +58,6 @@ import com.robertkoszewski.dsce.utils.NetworkInterface;
  */
 public class DreamScreenHDEmulator extends GenericEmulator {
 	
-	// Static Settings
-	
-	private static final long FRAME_MS = 16;
-	
 	// Constructors
 	
 	/**
@@ -162,11 +158,9 @@ public class DreamScreenHDEmulator extends GenericEmulator {
 							SubscribedDevice subscription = subscriptions.get(senderIPAddress);
 							if(subscription != null) {
 								// Device Exists
-								System.out.println("SUBSCRIPTION TOCK");
 								subscription.tock();
 							} else {
 								// Device Doesn't Exist
-								System.out.println("NEW SUBSCRIPTION");
 								subscriptions.put(senderIPAddress, new SubscribedDevice(senderIP));
 							}
 						}

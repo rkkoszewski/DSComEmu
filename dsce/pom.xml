@@ -4,10 +4,10 @@
 
   <groupId>com.robertkoszewski</groupId>
   <artifactId>dsce</artifactId>
-  <version>0.1.4-ALPHA</version>
+  <version>0.2.0-BETA</version>
   <packaging>jar</packaging>
 
-  <name>dsce</name>
+  <name>DreamScreen Commander &amp; Emulator (DSce)</name>
   <url>http://www.robertkoszewski.com</url>
 
   <properties>
@@ -22,4 +22,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <description>An unofficial DreamScreen compatible Client, CLI, Emulator and Debugger</description>
 </project>

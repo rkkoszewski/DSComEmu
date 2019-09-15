@@ -12,7 +12,6 @@ This project is formed of several components:
 
 This project was born in order to understand the communication protocol between a DreamScreen SideKick and a DreamScreen HD Device. DreamScreen is theoretically able to stream screen color updates at 60FPS to a SideKick device independently of the video source. The final goal is to Emulate a SideKick good enough to be able to receive the colors in realtime from an original DreamScreen HD device and be able to forward these to another homebrew RGB device.
 
-
 ## Quick Start Guide: ##
 
 The easiest way to start is to use the CLI interface by running the JAR file in a terminal (*java -jar dsce.jar*). A list of available commands with a brief description can be seen with the command " **help** ". By using " **help %command%** " you can see a more detailed description. 
@@ -41,7 +40,6 @@ The available emulators can be found in the package **com.robertkoszewski.dsce.e
 
 
 # TODOS: #
-- Implement group broadcasts when a device setting gets changed.
 - Finish the HDMI Active Channels decoding and encoding in the DreamScreenHD and 4K client class.
 - Implement thread saftyness.
 - Any other unfinished tasks.
